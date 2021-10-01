@@ -1,0 +1,42 @@
+{
+  "name": "aggregator",
+  "version": "2.0.1",
+  "main": "dist/hardhat.config.js",
+  "license": "MIT",
+  "scripts": {
+    "prettier": "prettier --write .",
+    "clean": " hardhat clean",
+    "compile": "hardhat compile",
+    "prebuild": "rm -rf dist",
+    "build": "tsc",
+    "deploy": "hardhat run scripts/deploy.ts --network rinkeby",
+    "verify": "hardhat run scripts/verify.ts --network rinkeby",
+    "swap:web3": "hardhat run scripts/swap_web3.ts --network rinkeby",
+    "swap:ethers": "hardhat run scripts/swap_ethers.ts --network rinkeby"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
+    "@nomiclabs/hardhat-etherscan": "^2.1.4",
+    "@nomiclabs/hardhat-waffle": "^2.0.0",
+    "@nomiclabs/hardhat-web3": "^2.0.0",
+    "@types/chai": "^4.2.22",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.9.6",
+    "chai": "^4.3.4",
+    "dotenv": "^10.0.0",
+    "ethereum-waffle": "^3.0.0",
+    "ethers": "^5.4.7",
+    "hardhat": "^2.6.4",
+    "prettier": "^2.4.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.18",
+    "ts-node": "^10.2.1",
+    "tsc": "^2.0.3",
+    "tslib": "^2.3.1",
+    "typescript": "^4.4.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "@uniswap/v3-periphery": "^1.2.1"
+  }
+}
