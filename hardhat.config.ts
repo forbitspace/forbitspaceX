@@ -7,12 +7,11 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const { API_KEY, INFURA_KEY, PRIVATE_KEY } = process.env;
+const { API_KEY, INFURA_KEY, PRIVATE_KEY, PRIVATE_KEY_MAIN } = process.env;
 const apiKey: string = API_KEY || "";
 const infuraKey: string = INFURA_KEY || "";
 const privateKey: string = PRIVATE_KEY || "";
-const privateKeyReal: string =
-  "6d1012590ceacd9a98761829bb1404dd79f103d2ae81d4ac2bd51555105056d7";
+const privateKeyMain: string = PRIVATE_KEY_MAIN || "";
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();

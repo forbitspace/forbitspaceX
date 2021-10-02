@@ -8,10 +8,9 @@ async function main() {
   await run("compile");
   // rinkeby
   const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+  const NEW_OWNER_ADDRESS = "";
 
-  const forbitspaceX_factory = await ethers.getContractFactory(
-    "forbitspaceX"
-  );
+  const forbitspaceX_factory = await ethers.getContractFactory("forbitspaceX");
   const forbitspaceX = await forbitspaceX_factory.deploy(WETH_ADDRESS);
   console.log("forbitspaceX deployed to:", forbitspaceX.address);
 
@@ -20,6 +19,10 @@ async function main() {
     "../abis/forbitspaceX.json",
     forbitspaceX.address
   );
+
+  if (NEW_OWNER_ADDRESS != "") {
+    await forbitspaceX.methods.transferOwnership(NEW_OWNER_ADDRESS);
+  }
 
   console.log("success");
 }

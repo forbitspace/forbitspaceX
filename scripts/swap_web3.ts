@@ -165,7 +165,7 @@ async function main() {
   // const tx = await aggregate.send({ from: account });
   // console.log("tx >>>", tx);
 
-  // const txETH = await aggregate.send({
+  // const txETH = await aggregateETH.send({
   //   from: account,
   //   value: amountTotal,
   // });
