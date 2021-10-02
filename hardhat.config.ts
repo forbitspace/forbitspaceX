@@ -22,7 +22,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 });
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "rinkeby",
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {},
     localhost: {
@@ -30,7 +30,7 @@ const config: HardhatUserConfig = {
     },
     mainnet: {
       url: "https://mainnet.infura.io/v3/" + infuraKey,
-      accounts: [privateKeyReal],
+      accounts: [privateKeyMain],
     },
     rinkeby: {
       url: "https://rinkeby.infura.io/v3/" + infuraKey,
@@ -48,16 +48,7 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 10000000,
-          },
-        },
-      },
-      {
-        version: "0.6.0",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 10000000,
+            runs: 1000000,
           },
         },
       },
