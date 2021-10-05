@@ -2,167 +2,157 @@ import { ethers } from "hardhat";
 import { Contract, BigNumber, utils } from "ethers";
 
 import {
-  abi as FORBITSPACE_ABI,
-  address as FORBITSPACE_ADDRESS,
-} from "../abis/ForbitSpace.json";
-import { abi as WETH_ABI } from "../abis/IWETH.json";
+  abi as FORBITSPACEX_ABI,
+  address as FORBITSPACEX_ADDRESS,
+} from "../abis/forbitspaceX01.json";
 import { abi as ERC20_ABI } from "../abis/IERC20.json";
 import { abi as ROUTER_V2_ABI } from "../abis/IUniswapV2Router02.json";
+import { abi as ROUTER_V3_ABI } from "../abis/ISwapRouter.json";
 
 import {
+  ZERO_ADDRESS,
   WETH_ADDRESS,
   UNI_ADDRESS,
-  UNIV2_ROUTER_ADDRESS,
   SUSHI_ROUTER_ADDRESS,
+  UNIV2_ROUTER_ADDRESS,
+  UNIV3_ROUTER_ADDRESS,
 } from "./constants/addresses";
 
 import { MAX_UINT256 } from "./constants/hex";
 
-import { CallData } from "./types/call_data_ethers";
+import { SwapParam } from "./types/SwapParam";
 
 async function main() {
   const [signer] = await ethers.getSigners();
 
-  const WETH: Contract = new Contract(WETH_ADDRESS, WETH_ABI, signer);
-  const forbitspace: Contract = new Contract(
-    FORBITSPACE_ADDRESS,
-    FORBITSPACE_ABI,
-    signer
-  );
-  const sushiRouter: Contract = new Contract(
-    SUSHI_ROUTER_ADDRESS,
-    ROUTER_V2_ABI,
-    signer
-  );
-  const uniV2Router: Contract = new Contract(
-    UNIV2_ROUTER_ADDRESS,
-    ROUTER_V2_ABI,
+  const WETH: Contract = new Contract(WETH_ADDRESS, ERC20_ABI, signer);
+  const UNI: Contract = new Contract(UNI_ADDRESS, ERC20_ABI, signer);
+  const forbitspaceX: Contract = new Contract(
+    FORBITSPACEX_ADDRESS,
+    FORBITSPACEX_ABI,
     signer
   );
 
   const iERC20 = new utils.Interface(ERC20_ABI);
-  const iRouter = new utils.Interface(ROUTER_V2_ABI);
+  const iRouterV2 = new utils.Interface(ROUTER_V2_ABI);
+  const iRouterV3 = new utils.Interface(ROUTER_V3_ABI);
 
   // shoud use oracle price
-  let amountTotal: string = utils.parseUnits("0.1").toHexString();
+  let amountTotal: string = utils.parseUnits("0.15").toHexString();
   let amountIn: string = utils.parseUnits("0.049975").toHexString();
-  let amountOut: string = utils.parseUnits("0.02").toHexString();
+  let amountOut: string = utils.parseUnits("0.0").toHexString();
   let deadline: string = BigNumber.from(
     Math.round(Date.now() / 1000) + 60 * 20
   ).toHexString();
 
-  let swapExactTokensForTokens_EncodeABI = iRouter.encodeFunctionData(
+  const swapExactTokensForTokens_Encode = iRouterV2.encodeFunctionData(
     "swapExactTokensForTokens",
-    [amountIn, amountOut, [WETH_ADDRESS, UNI_ADDRESS], signer.address, deadline]
-  );
-  let swapTokensForExactTokens_EncodeABI = iRouter.encodeFunctionData(
-    "swapTokensForExactTokens",
-    [amountOut, amountIn, [WETH_ADDRESS, UNI_ADDRESS], signer.address, deadline]
+    [
+      amountIn,
+      amountOut,
+      [WETH_ADDRESS, UNI_ADDRESS],
+      FORBITSPACEX_ADDRESS,
+      deadline,
+    ]
   );
 
-  let datas: CallData[] = [
+  const exactInputSingle_Encode = iRouterV3.encodeFunctionData(
+    "exactInputSingle",
+    [
+      {
+        tokenIn: WETH_ADDRESS,
+        tokenOut: UNI_ADDRESS,
+        fee: "3000",
+        recipient: FORBITSPACEX_ADDRESS,
+        deadline: deadline,
+        amountIn: amountIn,
+        amountOutMinimum: amountOut,
+        sqrtPriceLimitX96: "0x00",
+      },
+    ]
+  );
+
+  const approveSushi_Encode = iERC20.encodeFunctionData("approve", [
+    SUSHI_ROUTER_ADDRESS,
+    MAX_UINT256,
+  ]);
+  const approveUniV2_Encode = iERC20.encodeFunctionData("approve", [
+    UNIV2_ROUTER_ADDRESS,
+    MAX_UINT256,
+  ]);
+  const approveUniV3_Encode = iERC20.encodeFunctionData("approve", [
+    UNIV3_ROUTER_ADDRESS,
+    MAX_UINT256,
+  ]);
+
+  var swapParams: SwapParam[] = [
     {
-      target: UNIV2_ROUTER_ADDRESS,
-      // callData: swapTokensForExactTokens_EncodeABI,
-      callData: swapExactTokensForTokens_EncodeABI,
+      target: WETH_ADDRESS,
+      swapData: approveSushi_Encode,
+    },
+    {
+      target: WETH_ADDRESS,
+      swapData: approveUniV2_Encode,
+    },
+    {
+      target: WETH_ADDRESS,
+      swapData: approveUniV3_Encode,
     },
     {
       target: SUSHI_ROUTER_ADDRESS,
-      // callData: swapTokensForExactTokens_EncodeABI,
-      callData: swapExactTokensForTokens_EncodeABI,
+      swapData: swapExactTokensForTokens_Encode,
+    },
+    {
+      target: UNIV2_ROUTER_ADDRESS,
+      swapData: swapExactTokensForTokens_Encode,
+    },
+    {
+      target: UNIV3_ROUTER_ADDRESS,
+      swapData: exactInputSingle_Encode,
     },
   ];
 
   const allowance: BigNumber = await WETH.allowance(
     signer.address,
-    FORBITSPACE_ADDRESS
+    FORBITSPACEX_ADDRESS
   );
 
   if (allowance.toHexString() < amountTotal) {
-    console.log("forbitspace approving...");
-    await WETH.approve(FORBITSPACE_ADDRESS, MAX_UINT256);
+    console.log("forbitspaceX approving...");
+    await WETH.approve(FORBITSPACEX_ADDRESS, MAX_UINT256);
   }
-  console.log("Approved");
-
-  const [uniAllow, sushiAllow]: boolean[] = await Promise.all([
-    forbitspace.allowance(UNIV2_ROUTER_ADDRESS),
-    forbitspace.allowance(SUSHI_ROUTER_ADDRESS),
-  ]);
-
-  // only owner
-  if (!(uniAllow && sushiAllow)) {
-    console.log("Setting allow...");
-    if (!uniAllow) {
-      const txUniAllow = await forbitspace.setAllowance(
-        UNIV2_ROUTER_ADDRESS,
-        true
-      );
-      await txUniAllow.wait();
-    }
-    if (!sushiAllow) {
-      const txSushiAllow = await forbitspace.setAllowance(
-        SUSHI_ROUTER_ADDRESS,
-        true
-      );
-      await txSushiAllow.wait();
-    }
-  }
-  console.log("Allowed");
+  console.log("Approved >>>", allowance.toHexString());
 
   console.log("Calling...");
 
-  const results = await forbitspace.callStatic.aggregateSwap(
-    WETH_ADDRESS,
+  const aggregateParams = [WETH_ADDRESS, UNI_ADDRESS, amountTotal, swapParams];
+
+  const aggregateETHParams = [
+    ZERO_ADDRESS,
+    UNI_ADDRESS,
     amountTotal,
-    datas
-  );
+    swapParams,
+    { value: amountTotal },
+  ];
 
-  const resultsETH = await forbitspace.callStatic.aggregateSwapETH(datas, {
-    value: amountTotal,
-  });
+  const [results, resultsETH, estimateGas, estimateGasETH] = await Promise.all([
+    forbitspaceX.callStatic.aggregate(...aggregateParams),
+    forbitspaceX.callStatic.aggregate(...aggregateETHParams),
+    forbitspaceX.estimateGas.aggregate(...aggregateParams),
+    forbitspaceX.estimateGas.aggregate(...aggregateETHParams),
+  ]);
 
-  console.log("results >>>", resultsETH);
-  console.log("");
-  console.log("Amount Left >>>", utils.formatUnits(results.amountLeft));
-
-  resultsETH.retAmounts.forEach((retAmount: BigNumber[]) => {
-    console.log("");
-    console.log(
-      `Amount In >>> ${utils.formatUnits(
-        retAmount[0]
-      )}  Amount Out >>> ${utils.formatUnits(retAmount[1])}`
-    );
-  });
-
-  const estimateGas = await forbitspace.estimateGas.aggregateSwapETH(datas, {
-    value: amountTotal,
-  });
   console.log("estimateGas >>>", estimateGas.toString());
+  console.log("estimateGasETH >>>", estimateGasETH.toString());
+  console.log("results >>>", results);
+  console.log("resultsETH >>>", resultsETH);
 
-  // const tx = await forbitspace.aggregateSwapETH(datas, {
-  //   value: amountTotal,
-  // });
-  // console.log("tx >>>", tx);
-  // const tx_wait = await tx.wait();
-  // console.log("tx_wait >>>", tx_wait);
-
-  // only owner
-  const collectTokens = await forbitspace.callStatic.collectTokens(
-    WETH_ADDRESS
-  );
-  console.log("collectTokens >>>", collectTokens.toString());
-  const collectETH = await forbitspace.callStatic.collectETH();
-  console.log("collectETH >>>", collectETH.toString());
-
-  // const txCollectFee = await forbitspace.collectTokens(WETH_ADDRESS);
-  // console.log("txCollectFee >>>", txCollectFee);
-  // const txCollectFee_wait = await txCollectFee.wait();
-  // console.log("txCollectFee_wait >>>", txCollectFee_wait);
-
-  // const txCollectFeeETH = await forbitspace.collectETH();
-  // console.log("txCollectFeeETH >>>", txCollectFeeETH);
-  // const txCollectFeeETH_wait = await txCollectFeeETH.wait();
-  // console.log("txCollectFeeETH_wait >>>", txCollectFeeETH_wait);
+  // const collectTokens = await forbitspaceX.callStatic.collectTokens(
+  //   WETH_ADDRESS
+  // );
+  // console.log("collectTokens >>>", collectTokens.toString());
+  // const collectETH = await forbitspaceX.callStatic.collectETH();
+  // console.log("collectETH >>>", collectETH.toString());
 }
 
 main()

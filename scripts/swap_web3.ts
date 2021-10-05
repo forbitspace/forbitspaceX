@@ -5,7 +5,6 @@ import {
   abi as FORBITSPACEX_ABI,
   address as FORBITSPACEX_ADDRESS,
 } from "../abis/forbitspaceX01.json";
-import { abi as WETH_ABI } from "../abis/IWETH.json";
 import { abi as ERC20_ABI } from "../abis/IERC20.json";
 import { abi as ROUTER_V2_ABI } from "../abis/IUniswapV2Router02.json";
 import { abi as ROUTER_V3_ABI } from "../abis/ISwapRouter.json";
@@ -21,12 +20,12 @@ import {
 
 import { MAX_UINT256 } from "./constants/hex";
 
-import { SwapParam } from "./types/call_data_web3";
+import { SwapParam } from "./types/SwapParam";
 
 async function main() {
   const [account] = await web3.eth.getAccounts();
 
-  const WETH = new web3.eth.Contract(WETH_ABI as AbiItem[], WETH_ADDRESS);
+  const WETH = new web3.eth.Contract(ERC20_ABI as AbiItem[], WETH_ADDRESS);
   const forbitspaceX = new web3.eth.Contract(
     FORBITSPACEX_ABI as AbiItem[],
     FORBITSPACEX_ADDRESS
@@ -51,9 +50,7 @@ async function main() {
   const amountIn: string = web3.utils.toHex(
     web3.utils.toWei("0.049975", "ether")
   );
-  const amountOut: string = web3.utils.toHex(
-    web3.utils.toWei("0.020", "ether")
-  );
+  const amountOut: string = web3.utils.toHex(web3.utils.toWei("0.0", "ether"));
   const deadline: string = web3.utils.toHex(
     Math.round(Date.now() / 1000) + 60 * 20
   );
@@ -62,13 +59,6 @@ async function main() {
   const swapExactTokensForTokens = uniV2Router.methods.swapExactTokensForTokens(
     amountIn,
     amountOut,
-    [WETH_ADDRESS, UNI_ADDRESS],
-    FORBITSPACEX_ADDRESS,
-    deadline
-  );
-  const swapTokensForExactTokens = uniV2Router.methods.swapTokensForExactTokens(
-    amountOut,
-    amountIn,
     [WETH_ADDRESS, UNI_ADDRESS],
     FORBITSPACEX_ADDRESS,
     deadline
@@ -95,6 +85,10 @@ async function main() {
   var swapParam: SwapParam[] = [
     {
       target: WETH_ADDRESS,
+      swapData: approveSushi.encodeABI(),
+    },
+    {
+      target: WETH_ADDRESS,
       swapData: approveUniV2.encodeABI(),
     },
     {
@@ -102,17 +96,11 @@ async function main() {
       swapData: approveUniV3.encodeABI(),
     },
     {
-      target: WETH_ADDRESS,
-      swapData: approveSushi.encodeABI(),
-    },
-    {
-      target: UNIV2_ROUTER_ADDRESS,
-      // swapData: swapTokensForExactTokens.encodeABI(),
+      target: SUSHI_ROUTER_ADDRESS,
       swapData: swapExactTokensForTokens.encodeABI(),
     },
     {
-      target: SUSHI_ROUTER_ADDRESS,
-      // swapData: swapTokensForExactTokens.encodeABI(),
+      target: UNIV2_ROUTER_ADDRESS,
       swapData: swapExactTokensForTokens.encodeABI(),
     },
     {
@@ -135,43 +123,47 @@ async function main() {
     swapParam
   );
 
-  const allowance = await WETH.methods
+  var allowance = await WETH.methods
     .allowance(account, FORBITSPACEX_ADDRESS)
     .call();
   if (web3.utils.toHex(allowance) < amountTotal) {
     console.log("forbitspaceX approving...");
-    const res = await approve.send({ from: account });
+    await approve.send({ from: account });
+    allowance = await WETH.methods
+      .allowance(account, FORBITSPACEX_ADDRESS)
+      .call();
   }
   console.log("Approved >>>", allowance);
 
   console.log("Calling...");
 
-  const estimateGas = await aggregate.estimateGas({ from: account });
-  console.log("estimateGas >>>", estimateGas);
-  const results = await aggregate.call({ from: account });
-  console.log("results >>>", results);
+  const [estimateGas, estimateGasETH, results, resultsETH] = await Promise.all([
+    aggregate.estimateGas({ from: account }),
+    aggregateETH.estimateGas({
+      from: account,
+      value: amountTotal,
+    }),
+    aggregate.call({ from: account }),
+    aggregateETH.call({
+      from: account,
+      value: amountTotal,
+    }),
+  ]);
 
-  const estimateGasETH = await aggregateETH.estimateGas({
-    from: account,
-    value: amountTotal,
-  });
+  console.log("estimateGas >>>", estimateGas);
+  console.log("results >>>", results);
   console.log("estimateGasETH >>>", estimateGasETH);
-  const resultsETH = await aggregateETH.call({
-    from: account,
-    value: amountTotal,
-  });
   console.log("resultsETH >>>", resultsETH);
 
   // const tx = await aggregate.send({ from: account });
   // console.log("tx >>>", tx);
 
-  // const txETH = await aggregateETH.send({
+  // const txETH = await aggregate.send({
   //   from: account,
   //   value: amountTotal,
   // });
   // console.log("txETH >>>", txETH);
 
-  // only owner
   const [collectETH, collectTokens] = await Promise.all([
     forbitspaceX.methods.collectETH().call({ from: account }),
     forbitspaceX.methods.collectTokens(WETH_ADDRESS).call({ from: account }),
@@ -179,12 +171,6 @@ async function main() {
 
   console.log("collectETH >>>", collectETH);
   console.log("collectWETH >>>", collectTokens);
-
-  // const txCollectFee = await forbitspaceX.methods
-  //   .collectETH()
-  //   .send({ from: account });
-
-  // console.log("txCollectFee >>>", txCollectFee);
 }
 
 main()

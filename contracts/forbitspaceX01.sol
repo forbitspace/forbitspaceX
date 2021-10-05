@@ -9,7 +9,7 @@ struct SwapParam {
 	bytes swapData;
 }
 
-contract forbitspaceX is Payment {
+contract forbitspaceX01 is Payment {
 	using SafeMath for uint;
 	using Address for address;
 
@@ -47,20 +47,22 @@ contract forbitspaceX is Payment {
 			uint[2][] memory retAmounts
 		)
 	{
-		require(!(tokenIn == tokenOut), 'I_T_A'); // invalid tokens address
+		// invalid tokens address
+		require(!(tokenIn == tokenOut), 'I_T_A');
+		require(!(tokenIn == address(0) && tokenOut == WETH_), 'I_T_A');
 		require(!(tokenIn == WETH_ && tokenOut == address(0)), 'I_T_A');
-		require(!(tokenOut == WETH_ && tokenIn == address(0)), 'I_T_A');
 
-		if (tokenIn != address(0)) require(msg.value == 0, 'I_V');
-		else require((amountTotal = msg.value) > 0, 'I_V'); // invalid value
+		// invalid value
+		if (tokenIn == address(0)) require((amountTotal = msg.value) > 0, 'I_V');
+		else require(msg.value == 0, 'I_V');
 
 		pay(tokenIn, amountTotal);
-		amountInTotal = balanceOf(tokenIn); // amountInToTal before
-		amountOutTotal = balanceOf(tokenOut); // amountOutToTal before
+		amountInTotal = balanceOf(tokenIn); // amountInTotal before
+		amountOutTotal = balanceOf(tokenOut); // amountOutTotal before
 		retAmounts = _swap(tokenIn, tokenOut, params); // call swaps
-		amountInTotal = amountInTotal.sub(balanceOf(tokenIn)); // amountInToTal after
-		amountOutTotal = balanceOf(tokenOut).sub(amountOutTotal); // amountOutToTal after
-		refund(tokenIn, amountTotal.sub(amountInTotal.mul(2000).div(1999))); // 0.05% fee
+		amountInTotal = amountInTotal.sub(balanceOf(tokenIn)); // amountInTotal after
+		amountOutTotal = balanceOf(tokenOut).sub(amountOutTotal); // amountOutTotal after
+		refund(tokenIn, amountTotal.sub(amountInTotal.mul(2000).div(1999), 'N_E_T')); // not enough tokens with 0.05% fee
 		refund(tokenOut, amountOutTotal);
 		collectTokens(tokenIn);
 	}

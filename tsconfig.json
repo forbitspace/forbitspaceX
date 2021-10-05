@@ -3,7 +3,6 @@
   "include": ["./scripts", "./test"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "paths": { "~/*": ["src/*"] },
     "target": "es6", //es2018
     "module": "commonjs", //esnext
     "moduleResolution": "node",

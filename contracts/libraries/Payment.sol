@@ -21,6 +21,7 @@ abstract contract Payment is Ownable {
 	}
 
 	function balanceOf(address token) internal view returns (uint bal) {
+		if (token == address(0)) token = WETH_;
 		bal = IERC20(token).balanceOf(address(this));
 	}
 

@@ -2,26 +2,28 @@ import { resolve } from "path";
 import { readFileSync, writeFileSync } from "fs";
 import { run, ethers } from "hardhat";
 
-// import { WETH_ADDRESS } from "./constants/addresses";
+import { WETH_ADDRESS } from "./constants/addresses";
 
 async function main() {
   await run("compile");
   // rinkeby
-  const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+  // const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
   const NEW_OWNER_ADDRESS = "";
-
-  const forbitspaceX_factory = await ethers.getContractFactory("forbitspaceX");
-  const forbitspaceX = await forbitspaceX_factory.deploy(WETH_ADDRESS);
-  console.log("forbitspaceX deployed to:", forbitspaceX.address);
+  const contractName = "forbitspaceX01";
+  const factory = await ethers.getContractFactory(contractName);
+  const contract = await factory.deploy(WETH_ADDRESS);
+  console.log(`${contractName} deployed to >>>`, contract.address);
 
   await writeContractJson(
-    "../artifacts/contracts/forbitspaceX.sol/forbitspaceX.json",
-    "../abis/forbitspaceX.json",
-    forbitspaceX.address
+    `../artifacts/contracts/${contractName}.sol/${contractName}.json`,
+    `../abis/${contractName}.json`,
+    contract.address
   );
 
-  if (NEW_OWNER_ADDRESS != "") {
-    await forbitspaceX.methods.transferOwnership(NEW_OWNER_ADDRESS);
+  if (NEW_OWNER_ADDRESS && NEW_OWNER_ADDRESS != "") {
+    console.log("Transfer owner");
+
+    await contract.transferOwnership(NEW_OWNER_ADDRESS);
   }
 
   console.log("success");
