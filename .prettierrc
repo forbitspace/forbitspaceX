@@ -5,10 +5,10 @@
       "options": {
         "compiler": "0.8.0",
         "printWidth": 120,
-        "tabWidth": 2,
+        "tabWidth": 4,
         "useTabs": true,
-        "singleQuote": true,
-        "bracketSpacing": false,
+        "singleQuote": false,
+        "bracketSpacing": true,
         "explicitTypes": "never"
       }
     }

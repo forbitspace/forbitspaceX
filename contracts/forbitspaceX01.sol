@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0;
 pragma abicoder v2;
 
-import {Payment, SafeMath, Address} from './libraries/Payment.sol';
+import { Payment, SafeMath, Address } from "./libraries/Payment.sol";
 
 struct SwapParam {
 	address target;
@@ -26,7 +26,7 @@ contract forbitspaceX01 is Payment {
 		for (uint i = 0; i < params.length; i++) {
 			uint amountIn = balanceOf(tokenIn); // amountIn before
 			uint amountOut = balanceOf(tokenOut); // amountOut before
-			params[i].target.functionCall(params[i].swapData, 'C_S_F'); // call swap failed
+			params[i].target.functionCall(params[i].swapData, "C_S_F"); // call swap failed
 			amountIn = amountIn.sub(balanceOf(tokenIn)); // amountIn after
 			amountOut = balanceOf(tokenOut).sub(amountOut); // amountOut after
 			retAmounts[i] = [amountIn, amountOut];
@@ -48,13 +48,13 @@ contract forbitspaceX01 is Payment {
 		)
 	{
 		// invalid tokens address
-		require(!(tokenIn == tokenOut), 'I_T_A');
-		require(!(tokenIn == address(0) && tokenOut == WETH_), 'I_T_A');
-		require(!(tokenIn == WETH_ && tokenOut == address(0)), 'I_T_A');
+		require(!(tokenIn == tokenOut), "I_T_A");
+		require(!(tokenIn == address(0) && tokenOut == WETH_), "I_T_A");
+		require(!(tokenIn == WETH_ && tokenOut == address(0)), "I_T_A");
 
 		// invalid value
-		if (tokenIn == address(0)) require((amountTotal = msg.value) > 0, 'I_V');
-		else require(msg.value == 0, 'I_V');
+		if (tokenIn == address(0)) require((amountTotal = msg.value) > 0, "I_V");
+		else require(msg.value == 0, "I_V");
 
 		pay(tokenIn, amountTotal);
 		amountInTotal = balanceOf(tokenIn); // amountInTotal before
@@ -62,7 +62,7 @@ contract forbitspaceX01 is Payment {
 		retAmounts = _swap(tokenIn, tokenOut, params); // call swaps
 		amountInTotal = amountInTotal.sub(balanceOf(tokenIn)); // amountInTotal after
 		amountOutTotal = balanceOf(tokenOut).sub(amountOutTotal); // amountOutTotal after
-		refund(tokenIn, amountTotal.sub(amountInTotal.mul(2000).div(1999), 'N_E_T')); // not enough tokens with 0.05% fee
+		refund(tokenIn, amountTotal.sub(amountInTotal.mul(2000).div(1999), "N_E_T")); // not enough tokens with 0.05% fee
 		refund(tokenOut, amountOutTotal);
 		collectTokens(tokenIn);
 	}

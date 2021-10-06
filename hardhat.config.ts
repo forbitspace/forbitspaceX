@@ -3,15 +3,14 @@ import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-web3";
 import "@nomiclabs/hardhat-etherscan";
-import * as dotenv from "dotenv";
-
-dotenv.config();
-
-const { API_KEY, INFURA_KEY, PRIVATE_KEY, PRIVATE_KEY_MAIN } = process.env;
-const apiKey: string = API_KEY || "";
-const infuraKey: string = INFURA_KEY || "";
-const privateKey: string = PRIVATE_KEY || "";
-const privateKeyMain: string = PRIVATE_KEY_MAIN || "";
+import {
+  apiKey,
+  infuraKey,
+  privateKey,
+  privateKeyMainnet,
+  privateKeyPolygon,
+  privateKeyBSC,
+} from "./config";
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
@@ -30,14 +29,26 @@ const config: HardhatUserConfig = {
     },
     mainnet: {
       url: "https://mainnet.infura.io/v3/" + infuraKey,
-      accounts: [privateKeyMain],
+      accounts: [privateKeyMainnet],
     },
     rinkeby: {
       url: "https://rinkeby.infura.io/v3/" + infuraKey,
       accounts: [privateKey],
     },
+    polygon: {
+      url: "https://rpc-mainnet.maticvigil.com",
+      accounts: [privateKeyPolygon],
+    },
     mumbai: {
       url: "https://rpc-mumbai.maticvigil.com",
+      accounts: [privateKey],
+    },
+    bsc_mainnet: {
+      url: "https://bsc-dataseed.binance.org/",
+      accounts: [privateKeyBSC],
+    },
+    bsc_testnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
       accounts: [privateKey],
     },
   },
