@@ -2,17 +2,11 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const {
-  API_KEY,
-  INFURA_KEY,
-  PRIVATE_KEY,
-  PRIVATE_KEY_MAINNET,
-  PRIVATE_KEY_POLYGON,
-  PRIVATE_KEY_BSC,
-} = process.env;
-export const apiKey: string = API_KEY || "";
-export const infuraKey: string = INFURA_KEY || "";
-export const privateKey: string = PRIVATE_KEY || "";
-export const privateKeyMainnet: string = PRIVATE_KEY_MAINNET || "";
-export const privateKeyPolygon: string = PRIVATE_KEY_POLYGON || "";
-export const privateKeyBSC: string = PRIVATE_KEY_BSC || "";
+export const API_KEY: string = process.env.API_KEY || "";
+export const INFURA_KEY: string = process.env.INFURA_KEY || "";
+export const PRIVATE_KEY: string = process.env.PRIVATE_KEY || "";
+export const PRIVATE_KEY_MAINNET: string =
+  process.env.PRIVATE_KEY_MAINNET || "";
+export const PRIVATE_KEY_POLYGON: string =
+  process.env.PRIVATE_KEY_POLYGON || "";
+export const PRIVATE_KEY_BSC: string = process.env.PRIVATE_KEY_BSC || "";

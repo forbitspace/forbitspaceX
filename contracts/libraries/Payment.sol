@@ -5,7 +5,13 @@ import { SafeERC20, IERC20, Address } from "@openzeppelin/contracts/token/ERC20/
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IWETH } from "../interfaces/IWETH.sol";
+interface IWETH is IERC20 {
+	/// @notice Deposit ether to get wrapped ether
+	function deposit() external payable;
+
+	/// @notice Withdraw wrapped ether to get ether
+	function withdraw(uint) external;
+}
 
 abstract contract Payment is Ownable {
 	using SafeMath for uint;

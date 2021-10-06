@@ -4,12 +4,12 @@ import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-web3";
 import "@nomiclabs/hardhat-etherscan";
 import {
-  apiKey,
-  infuraKey,
-  privateKey,
-  privateKeyMainnet,
-  privateKeyPolygon,
-  privateKeyBSC,
+  API_KEY,
+  INFURA_KEY,
+  PRIVATE_KEY,
+  PRIVATE_KEY_MAINNET,
+  PRIVATE_KEY_POLYGON,
+  PRIVATE_KEY_BSC,
 } from "./config";
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
@@ -28,28 +28,28 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8545",
     },
     mainnet: {
-      url: "https://mainnet.infura.io/v3/" + infuraKey,
-      accounts: [privateKeyMainnet],
+      url: "https://mainnet.infura.io/v3/" + INFURA_KEY,
+      accounts: [PRIVATE_KEY_MAINNET],
     },
     rinkeby: {
-      url: "https://rinkeby.infura.io/v3/" + infuraKey,
-      accounts: [privateKey],
+      url: "https://rinkeby.infura.io/v3/" + INFURA_KEY,
+      accounts: [PRIVATE_KEY],
     },
     polygon: {
       url: "https://rpc-mainnet.maticvigil.com",
-      accounts: [privateKeyPolygon],
+      accounts: [PRIVATE_KEY_POLYGON],
     },
     mumbai: {
       url: "https://rpc-mumbai.maticvigil.com",
-      accounts: [privateKey],
+      accounts: [PRIVATE_KEY],
     },
     bsc_mainnet: {
       url: "https://bsc-dataseed.binance.org/",
-      accounts: [privateKeyBSC],
+      accounts: [PRIVATE_KEY_BSC],
     },
     bsc_testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      accounts: [privateKey],
+      accounts: [PRIVATE_KEY],
     },
   },
   solidity: {
@@ -68,7 +68,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: apiKey,
+    apiKey: API_KEY,
   },
   paths: {
     sources: "./contracts",
