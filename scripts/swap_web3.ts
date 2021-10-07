@@ -4,7 +4,7 @@ import { AbiItem } from "web3-utils";
 import {
   abi as FORBITSPACEX_ABI,
   address as FORBITSPACEX_ADDRESS,
-} from "../abis/forbitspaceX01.json";
+} from "../abis/forbitspaceX.json";
 import { abi as ERC20_ABI } from "../abis/IERC20.json";
 import { abi as ROUTER_V2_ABI } from "../abis/IUniswapV2Router02.json";
 import { abi as ROUTER_V3_ABI } from "../abis/ISwapRouter.json";

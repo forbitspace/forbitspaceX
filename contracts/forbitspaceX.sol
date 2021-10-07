@@ -2,14 +2,10 @@
 pragma solidity >=0.8.0;
 pragma abicoder v2;
 
+import { IforbitspaceX, SwapParam } from "./interfaces/IforbitspaceX.sol";
 import { Payment, SafeMath, Address } from "./libraries/Payment.sol";
 
-struct SwapParam {
-	address target;
-	bytes swapData;
-}
-
-contract forbitspaceX is Payment {
+contract forbitspaceX is IforbitspaceX, Payment {
 	using SafeMath for uint;
 	using Address for address;
 
@@ -18,29 +14,17 @@ contract forbitspaceX is Payment {
 	function _swap(
 		address tokenIn,
 		address tokenOut,
-		uint amountInTotal,
 		SwapParam[] memory params
-	)
-		private
-		returns (
-			uint[2][] memory retAmounts,
-			uint amountInLeft,
-			uint amountOutTotal
-		)
-	{
+	) private returns (uint[2][] memory retAmounts) {
+		retAmounts = new uint[2][](params.length);
 		if (tokenIn == address(0)) tokenIn = WETH_;
 		if (tokenOut == address(0)) tokenOut = WETH_;
-		amountInLeft = amountInTotal;
-		retAmounts = new uint[2][](params.length);
 		for (uint i = 0; i < params.length; i++) {
-			SwapParam memory param = params[i];
 			uint amountIn = balanceOf(tokenIn); // amountIn before
 			uint amountOut = balanceOf(tokenOut); // amountOut before
-			param.target.functionCall(param.swapData, "C_S_F"); // call swap failed
+			params[i].target.functionCall(params[i].swapData, "C_S_F"); // call swap failed
 			amountIn = amountIn.sub(balanceOf(tokenIn)); // amountIn after
 			amountOut = balanceOf(tokenOut).sub(amountOut); // amountOut after
-			amountInLeft = amountInLeft.sub(amountIn.mul(2000).div(1999), "N_E_T"); // not enough tokens with 0.05% fee
-			amountOutTotal = amountOutTotal.add(amountOut);
 			retAmounts[i] = [amountIn, amountOut];
 		}
 	}
@@ -48,29 +32,34 @@ contract forbitspaceX is Payment {
 	function aggregate(
 		address tokenIn,
 		address tokenOut,
-		uint amountInTotal,
+		uint amountTotal,
 		SwapParam[] memory params
 	)
 		public
 		payable
+		override
 		returns (
-			uint[2][] memory retAmounts,
-			uint amountInLeft,
-			uint amountOutTotal
+			uint amountInTotal,
+			uint amountOutTotal,
+			uint[2][] memory retAmounts
 		)
 	{
-		require(tokenIn != tokenOut, "I_T_A"); // invalid tokens address
-		require(!(tokenIn == address(0) && tokenOut == WETH_));
-		require(!(tokenIn == WETH_ && tokenOut == address(0)));
+		// invalid tokens address
+		require(!(tokenIn == tokenOut), "I_T_A");
+		require(!(tokenIn == address(0) && tokenOut == WETH_), "I_T_A");
+		require(!(tokenIn == WETH_ && tokenOut == address(0)), "I_T_A");
 
-		if (tokenIn == address(0)) require((amountInTotal = msg.value) > 0);
-		else require(msg.value == 0);
+		// invalid value
+		if (tokenIn == address(0)) require((amountTotal = msg.value) > 0, "I_V");
+		else require(msg.value == 0, "I_V");
 
-		pay(tokenIn, amountInTotal);
-		uint amountETH = address(this).balance;
-		(retAmounts, amountInLeft, amountOutTotal) = _swap(tokenIn, tokenOut, amountInTotal, params);
-		amountETH = address(this).balance.sub(amountETH);
-		refund(tokenIn, amountInLeft);
+		pay(tokenIn, amountTotal);
+		amountInTotal = balanceOf(tokenIn); // amountInTotal before
+		amountOutTotal = balanceOf(tokenOut); // amountOutTotal before
+		retAmounts = _swap(tokenIn, tokenOut, params); // call dex swaps
+		amountInTotal = amountInTotal.sub(balanceOf(tokenIn)); // amountInTotal after
+		amountOutTotal = balanceOf(tokenOut).sub(amountOutTotal); // amountOutTotal after
+		refund(tokenIn, amountTotal.sub(amountInTotal.mul(2000).div(1999), "N_E_T")); // not enough tokens with 0.05% fee
 		refund(tokenOut, amountOutTotal);
 		collectTokens(tokenIn);
 	}

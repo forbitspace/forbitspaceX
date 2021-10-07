@@ -9,7 +9,7 @@ async function main() {
   // rinkeby
   // const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
   const NEW_OWNER_ADDRESS = "";
-  const contractName = "forbitspaceX01";
+  const contractName = "forbitspaceX";
   const factory = await ethers.getContractFactory(contractName);
   const contract = await factory.deploy(WETH_ADDRESS);
   console.log(`${contractName} deployed to >>>`, contract.address);

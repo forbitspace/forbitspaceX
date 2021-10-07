@@ -4,16 +4,10 @@ pragma solidity >=0.8.0;
 import { SafeERC20, IERC20, Address } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IPayment } from "../interfaces/IPayment.sol";
+import { IWETH } from "../interfaces/IWETH.sol";
 
-interface IWETH is IERC20 {
-	/// @notice Deposit ether to get wrapped ether
-	function deposit() external payable;
-
-	/// @notice Withdraw wrapped ether to get ether
-	function withdraw(uint) external;
-}
-
-abstract contract Payment is Ownable {
+abstract contract Payment is IPayment, Ownable {
 	using SafeMath for uint;
 	using SafeERC20 for IERC20;
 	using Address for address payable;
@@ -47,12 +41,12 @@ abstract contract Payment is Ownable {
 		}
 	}
 
-	function collectETH() public returns (uint amount) {
+	function collectETH() public override returns (uint amount) {
 		if (balanceOf(WETH_) > 0) IWETH(WETH_).withdraw(balanceOf(WETH_));
 		if ((amount = address(this).balance) > 0) payable(owner()).sendValue(amount);
 	}
 
-	function collectTokens(address token) public returns (uint amount) {
+	function collectTokens(address token) public override returns (uint amount) {
 		if (token == address(0)) amount = collectETH();
 		else if ((amount = balanceOf(token)) > 0) IERC20(token).safeTransfer(owner(), amount);
 	}
