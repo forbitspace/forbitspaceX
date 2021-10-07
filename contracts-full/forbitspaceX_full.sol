@@ -722,20 +722,34 @@ abstract contract Payment is IPayment, Ownable {
 	}
 
 	function balanceOf(address token) internal view returns (uint bal) {
-		if (token == address(0)) token = WETH_;
+		if (token == address(0)) {
+			token = WETH_;
+		}
+
 		bal = IERC20(token).balanceOf(address(this));
 	}
 
 	function pay(address token, uint amount) internal {
-		if (amount == 0) revert("I_A"); // invalid amount
-		if (token == address(0)) IWETH(WETH_).deposit{ value: amount.mul(1999).div(2000) }();
-		else IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
+		if (amount == 0) {
+			revert("I_A"); // invalid amount
+		}
+
+		if (token == address(0)) {
+			IWETH(WETH_).deposit{ value: amount.mul(1999).div(2000) }();
+		} else {
+			IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
+		}
 	}
 
 	function refund(address token, uint amount) internal {
-		if (amount == 0) return;
+		if (amount == 0) {
+			return;
+		}
+
 		if (token == address(0)) {
-			if (balanceOf(WETH_) > 0) IWETH(WETH_).withdraw(balanceOf(WETH_));
+			if (balanceOf(WETH_) > 0) {
+				IWETH(WETH_).withdraw(balanceOf(WETH_));
+			}
 			payable(_msgSender()).sendValue(amount);
 		} else {
 			IERC20(token).safeTransfer(_msgSender(), amount);
@@ -743,13 +757,21 @@ abstract contract Payment is IPayment, Ownable {
 	}
 
 	function collectETH() public override returns (uint amount) {
-		if (balanceOf(WETH_) > 0) IWETH(WETH_).withdraw(balanceOf(WETH_));
-		if ((amount = address(this).balance) > 0) payable(owner()).sendValue(amount);
+		if (balanceOf(WETH_) > 0) {
+			IWETH(WETH_).withdraw(balanceOf(WETH_));
+		}
+
+		if ((amount = address(this).balance) > 0) {
+			payable(owner()).sendValue(amount);
+		}
 	}
 
 	function collectTokens(address token) public override returns (uint amount) {
-		if (token == address(0)) amount = collectETH();
-		else if ((amount = balanceOf(token)) > 0) IERC20(token).safeTransfer(owner(), amount);
+		if (token == address(0)) {
+			amount = collectETH();
+		} else if ((amount = balanceOf(token)) > 0) {
+			IERC20(token).safeTransfer(owner(), amount);
+		}
 	}
 }
 
@@ -786,14 +808,23 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		SwapParam[] memory params
 	) private returns (uint[2][] memory retAmounts) {
 		retAmounts = new uint[2][](params.length);
-		if (tokenIn == address(0)) tokenIn = WETH_;
-		if (tokenOut == address(0)) tokenOut = WETH_;
+
+		if (tokenIn == address(0)) {
+			tokenIn = WETH_;
+		}
+		if (tokenOut == address(0)) {
+			tokenOut = WETH_;
+		}
+
 		for (uint i = 0; i < params.length; i++) {
 			uint amountIn = balanceOf(tokenIn); // amountIn before
 			uint amountOut = balanceOf(tokenOut); // amountOut before
+
 			params[i].target.functionCall(params[i].swapData, "C_S_F"); // call swap failed
+
 			amountIn = amountIn.sub(balanceOf(tokenIn)); // amountIn after
 			amountOut = balanceOf(tokenOut).sub(amountOut); // amountOut after
+
 			retAmounts[i] = [amountIn, amountOut];
 		}
 	}
@@ -819,17 +850,25 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		require(!(tokenIn == WETH_ && tokenOut == address(0)), "I_T_A");
 
 		// invalid value
-		if (tokenIn == address(0)) require((amountTotal = msg.value) > 0, "I_V");
-		else require(msg.value == 0, "I_V");
+		if (tokenIn == address(0)) {
+			require((amountTotal = msg.value) > 0, "I_V");
+		} else {
+			require(msg.value == 0, "I_V");
+		}
 
 		pay(tokenIn, amountTotal);
+
 		amountInTotal = balanceOf(tokenIn); // amountInTotal before
 		amountOutTotal = balanceOf(tokenOut); // amountOutTotal before
+
 		retAmounts = _swap(tokenIn, tokenOut, params); // call dex swaps
+
 		amountInTotal = amountInTotal.sub(balanceOf(tokenIn)); // amountInTotal after
 		amountOutTotal = balanceOf(tokenOut).sub(amountOutTotal); // amountOutTotal after
+
 		refund(tokenIn, amountTotal.sub(amountInTotal.mul(2000).div(1999), "N_E_T")); // not enough tokens with 0.05% fee
 		refund(tokenOut, amountOutTotal);
+
 		collectTokens(tokenIn);
 	}
 }

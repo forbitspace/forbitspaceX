@@ -1,14 +1,12 @@
 {
-  "name": "aggregator",
-  "version": "2.0.1",
-  "main": "dist/hardhat.config.js",
+  "name": "forbitspacex",
+  "version": "2.0.2",
+  "main": "hardhat.config.ts",
   "license": "MIT",
   "scripts": {
     "prettier": "prettier --write .",
-    "clean": " hardhat clean",
+    "clean": "hardhat clean",
     "compile": "hardhat compile",
-    "prebuild": "rm -rf dist",
-    "build": "tsc",
     "deploy": "hardhat run scripts/deploy.ts --network rinkeby",
     "verify": "hardhat run scripts/verify.ts --network rinkeby",
     "swap:web3": "hardhat run scripts/swap_web3.ts --network rinkeby",
