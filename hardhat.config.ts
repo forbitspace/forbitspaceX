@@ -36,7 +36,7 @@ const config: HardhatUserConfig = {
       accounts: [PRIVATE_KEY],
     },
     polygon: {
-      url: "https://rpc-mainnet.maticvigil.com",
+      url: "https://polygon-rpc.com/",
       accounts: [PRIVATE_KEY_POLYGON],
     },
     mumbai: {
