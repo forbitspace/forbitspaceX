@@ -15,7 +15,7 @@ async function main() {
   console.log(`${contractName} deployed to >>>`, contract.address);
 
   await writeContractJson(
-    `../artifacts/contracts/${contractName}.sol/${contractName}.json`,
+    `../artifacts/contracts-merged/${contractName}.sol/${contractName}.json`,
     `../abis/${contractName}.json`,
     contract.address
   );

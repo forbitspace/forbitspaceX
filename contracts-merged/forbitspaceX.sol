@@ -1,7 +1,114 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.0;
+pragma solidity ^0.8.0;
 pragma abicoder v2;
 
+interface IPayment {
+	function collectETH() external returns (uint amount);
+
+	function collectTokens(address token) external returns (uint amount);
+}
+
+struct SwapParam {
+	address target;
+	bytes swapData;
+}
+
+interface IforbitspaceX is IPayment {
+	function aggregate(
+		address tokenIn,
+		address tokenOut,
+		uint amountTotal,
+		SwapParam[] memory params
+	)
+		external
+		payable
+		returns (
+			uint amountInTotal,
+			uint amountOutTotal,
+			uint[2][] memory retAmounts
+		);
+}
+
+//
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
+interface IERC20 {
+	/**
+	 * @dev Returns the amount of tokens in existence.
+	 */
+	function totalSupply() external view returns (uint);
+
+	/**
+	 * @dev Returns the amount of tokens owned by `account`.
+	 */
+	function balanceOf(address account) external view returns (uint);
+
+	/**
+	 * @dev Moves `amount` tokens from the caller's account to `recipient`.
+	 *
+	 * Returns a boolean value indicating whether the operation succeeded.
+	 *
+	 * Emits a {Transfer} event.
+	 */
+	function transfer(address recipient, uint amount) external returns (bool);
+
+	/**
+	 * @dev Returns the remaining number of tokens that `spender` will be
+	 * allowed to spend on behalf of `owner` through {transferFrom}. This is
+	 * zero by default.
+	 *
+	 * This value changes when {approve} or {transferFrom} are called.
+	 */
+	function allowance(address owner, address spender) external view returns (uint);
+
+	/**
+	 * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
+	 *
+	 * Returns a boolean value indicating whether the operation succeeded.
+	 *
+	 * IMPORTANT: Beware that changing an allowance with this method brings the risk
+	 * that someone may use both the old and the new allowance by unfortunate
+	 * transaction ordering. One possible solution to mitigate this race
+	 * condition is to first reduce the spender's allowance to 0 and set the
+	 * desired value afterwards:
+	 * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+	 *
+	 * Emits an {Approval} event.
+	 */
+	function approve(address spender, uint amount) external returns (bool);
+
+	/**
+	 * @dev Moves `amount` tokens from `sender` to `recipient` using the
+	 * allowance mechanism. `amount` is then deducted from the caller's
+	 * allowance.
+	 *
+	 * Returns a boolean value indicating whether the operation succeeded.
+	 *
+	 * Emits a {Transfer} event.
+	 */
+	function transferFrom(
+		address sender,
+		address recipient,
+		uint amount
+	) external returns (bool);
+
+	/**
+	 * @dev Emitted when `value` tokens are moved from one account (`from`) to
+	 * another (`to`).
+	 *
+	 * Note that `value` may be zero.
+	 */
+	event Transfer(address indexed from, address indexed to, uint value);
+
+	/**
+	 * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+	 * a call to {approve}. `value` is the new allowance.
+	 */
+	event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+//
 /**
  * @dev Collection of functions related to the address type
  */
@@ -215,16 +322,89 @@ library Address {
 	}
 }
 
-// CAUTION
-// This version of SafeMath should only be used with Solidity 0.8 or later,
-// because it relies on the compiler's built in overflow checks.
+library SafeERC20 {
+	using Address for address;
 
-/**
- * @dev Wrappers over Solidity's arithmetic operations.
- *
- * NOTE: `SafeMath` is no longer needed starting with Solidity 0.8. The compiler
- * now has built in overflow checking.
- */
+	function safeTransfer(
+		IERC20 token,
+		address to,
+		uint value
+	) internal {
+		_callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
+	}
+
+	function safeTransferFrom(
+		IERC20 token,
+		address from,
+		address to,
+		uint value
+	) internal {
+		_callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
+	}
+
+	/**
+	 * @dev Deprecated. This function has issues similar to the ones found in
+	 * {IERC20-approve}, and its usage is discouraged.
+	 *
+	 * Whenever possible, use {safeIncreaseAllowance} and
+	 * {safeDecreaseAllowance} instead.
+	 */
+	function safeApprove(
+		IERC20 token,
+		address spender,
+		uint value
+	) internal {
+		// safeApprove should only be called when setting an initial allowance,
+		// or when resetting it to zero. To increase and decrease it, use
+		// 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
+		require(
+			(value == 0) || (token.allowance(address(this), spender) == 0),
+			"SafeERC20: approve from non-zero to non-zero allowance"
+		);
+		_callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
+	}
+
+	function safeIncreaseAllowance(
+		IERC20 token,
+		address spender,
+		uint value
+	) internal {
+		uint newAllowance = token.allowance(address(this), spender) + value;
+		_callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
+	}
+
+	function safeDecreaseAllowance(
+		IERC20 token,
+		address spender,
+		uint value
+	) internal {
+		unchecked {
+			uint oldAllowance = token.allowance(address(this), spender);
+			require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
+			uint newAllowance = oldAllowance - value;
+			_callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
+		}
+	}
+
+	/**
+	 * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
+	 * on the return value: the return value is optional (but if data is returned, it must not be false).
+	 * @param token The token targeted by the call.
+	 * @param data The call data (encoded using abi.encode or one of its variants).
+	 */
+	function _callOptionalReturn(IERC20 token, bytes memory data) private {
+		// We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
+		// we're implementing it ourselves. We use {Address.functionCall} to perform this call, which verifies that
+		// the target address contains contract code and also asserts for success in the low-level call.
+
+		bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
+		if (returndata.length > 0) {
+			// Return data is optional
+			require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
+		}
+	}
+}
+
 library SafeMath {
 	/**
 	 * @dev Returns the addition of two unsigned integers, with an overflow flag.
@@ -438,184 +618,7 @@ library SafeMath {
 	}
 }
 
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
-interface IERC20 {
-	/**
-	 * @dev Returns the amount of tokens in existence.
-	 */
-	function totalSupply() external view returns (uint);
-
-	/**
-	 * @dev Returns the amount of tokens owned by `account`.
-	 */
-	function balanceOf(address account) external view returns (uint);
-
-	/**
-	 * @dev Moves `amount` tokens from the caller's account to `recipient`.
-	 *
-	 * Returns a boolean value indicating whether the operation succeeded.
-	 *
-	 * Emits a {Transfer} event.
-	 */
-	function transfer(address recipient, uint amount) external returns (bool);
-
-	/**
-	 * @dev Returns the remaining number of tokens that `spender` will be
-	 * allowed to spend on behalf of `owner` through {transferFrom}. This is
-	 * zero by default.
-	 *
-	 * This value changes when {approve} or {transferFrom} are called.
-	 */
-	function allowance(address owner, address spender) external view returns (uint);
-
-	/**
-	 * @dev Sets `amount` as the allowance of `spender` over the caller's tokens.
-	 *
-	 * Returns a boolean value indicating whether the operation succeeded.
-	 *
-	 * IMPORTANT: Beware that changing an allowance with this method brings the risk
-	 * that someone may use both the old and the new allowance by unfortunate
-	 * transaction ordering. One possible solution to mitigate this race
-	 * condition is to first reduce the spender's allowance to 0 and set the
-	 * desired value afterwards:
-	 * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-	 *
-	 * Emits an {Approval} event.
-	 */
-	function approve(address spender, uint amount) external returns (bool);
-
-	/**
-	 * @dev Moves `amount` tokens from `sender` to `recipient` using the
-	 * allowance mechanism. `amount` is then deducted from the caller's
-	 * allowance.
-	 *
-	 * Returns a boolean value indicating whether the operation succeeded.
-	 *
-	 * Emits a {Transfer} event.
-	 */
-	function transferFrom(
-		address sender,
-		address recipient,
-		uint amount
-	) external returns (bool);
-
-	/**
-	 * @dev Emitted when `value` tokens are moved from one account (`from`) to
-	 * another (`to`).
-	 *
-	 * Note that `value` may be zero.
-	 */
-	event Transfer(address indexed from, address indexed to, uint value);
-
-	/**
-	 * @dev Emitted when the allowance of a `spender` for an `owner` is set by
-	 * a call to {approve}. `value` is the new allowance.
-	 */
-	event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-interface IWETH is IERC20 {
-	/// @notice Deposit ether to get wrapped ether
-	function deposit() external payable;
-
-	/// @notice Withdraw wrapped ether to get ether
-	function withdraw(uint) external;
-}
-
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure (when the token
- * contract returns false). Tokens that return no value (and instead revert or
- * throw on failure) are also supported, non-reverting calls are assumed to be
- * successful.
- * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-	using Address for address;
-
-	function safeTransfer(
-		IERC20 token,
-		address to,
-		uint value
-	) internal {
-		_callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value));
-	}
-
-	function safeTransferFrom(
-		IERC20 token,
-		address from,
-		address to,
-		uint value
-	) internal {
-		_callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
-	}
-
-	/**
-	 * @dev Deprecated. This function has issues similar to the ones found in
-	 * {IERC20-approve}, and its usage is discouraged.
-	 *
-	 * Whenever possible, use {safeIncreaseAllowance} and
-	 * {safeDecreaseAllowance} instead.
-	 */
-	function safeApprove(
-		IERC20 token,
-		address spender,
-		uint value
-	) internal {
-		// safeApprove should only be called when setting an initial allowance,
-		// or when resetting it to zero. To increase and decrease it, use
-		// 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
-		require(
-			(value == 0) || (token.allowance(address(this), spender) == 0),
-			"SafeERC20: approve from non-zero to non-zero allowance"
-		);
-		_callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
-	}
-
-	function safeIncreaseAllowance(
-		IERC20 token,
-		address spender,
-		uint value
-	) internal {
-		uint newAllowance = token.allowance(address(this), spender) + value;
-		_callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
-	}
-
-	function safeDecreaseAllowance(
-		IERC20 token,
-		address spender,
-		uint value
-	) internal {
-		unchecked {
-			uint oldAllowance = token.allowance(address(this), spender);
-			require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
-			uint newAllowance = oldAllowance - value;
-			_callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
-		}
-	}
-
-	/**
-	 * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
-	 * on the return value: the return value is optional (but if data is returned, it must not be false).
-	 * @param token The token targeted by the call.
-	 * @param data The call data (encoded using abi.encode or one of its variants).
-	 */
-	function _callOptionalReturn(IERC20 token, bytes memory data) private {
-		// We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
-		// we're implementing it ourselves. We use {Address.functionCall} to perform this call, which verifies that
-		// the target address contains contract code and also asserts for success in the low-level call.
-
-		bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
-		if (returndata.length > 0) {
-			// Return data is optional
-			require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
-		}
-	}
-}
-
+//
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -636,18 +639,6 @@ abstract contract Context {
 	}
 }
 
-/**
- * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to
- * specific functions.
- *
- * By default, the owner account will be the one that deploys the contract. This
- * can later be changed with {transferOwnership}.
- *
- * This module is used through inheritance. It will make available the modifier
- * `onlyOwner`, which can be applied to your functions to restrict their use to
- * the owner.
- */
 abstract contract Ownable is Context {
 	address private _owner;
 
@@ -702,10 +693,35 @@ abstract contract Ownable is Context {
 	}
 }
 
-interface IPayment {
-	function collectETH() external returns (uint amount);
+//
+/**
+ * @dev Interface for the optional metadata functions from the ERC20 standard.
+ *
+ * _Available since v4.1._
+ */
+interface IERC20Metadata is IERC20 {
+	/**
+	 * @dev Returns the name of the token.
+	 */
+	function name() external view returns (string memory);
 
-	function collectTokens(address token) external returns (uint amount);
+	/**
+	 * @dev Returns the symbol of the token.
+	 */
+	function symbol() external view returns (string memory);
+
+	/**
+	 * @dev Returns the decimals places of the token.
+	 */
+	function decimals() external view returns (uint8);
+}
+
+interface IWETH is IERC20 {
+	/// @notice Deposit ether to get wrapped ether
+	function deposit() external payable;
+
+	/// @notice Withdraw wrapped ether to get ether
+	function withdraw(uint) external;
 }
 
 abstract contract Payment is IPayment, Ownable {
@@ -722,34 +738,20 @@ abstract contract Payment is IPayment, Ownable {
 	}
 
 	function balanceOf(address token) internal view returns (uint bal) {
-		if (token == address(0)) {
-			token = WETH_;
-		}
-
+		if (token == address(0)) token = WETH_;
 		bal = IERC20(token).balanceOf(address(this));
 	}
 
 	function pay(address token, uint amount) internal {
-		if (amount == 0) {
-			revert("I_A"); // invalid amount
-		}
-
-		if (token == address(0)) {
-			IWETH(WETH_).deposit{ value: amount.mul(1999).div(2000) }();
-		} else {
-			IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
-		}
+		if (amount == 0) revert("I_A"); // invalid amount
+		if (token == address(0)) IWETH(WETH_).deposit{ value: amount.mul(1999).div(2000) }();
+		else IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
 	}
 
 	function refund(address token, uint amount) internal {
-		if (amount == 0) {
-			return;
-		}
-
+		if (amount == 0) return;
 		if (token == address(0)) {
-			if (balanceOf(WETH_) > 0) {
-				IWETH(WETH_).withdraw(balanceOf(WETH_));
-			}
+			if (balanceOf(WETH_) > 0) IWETH(WETH_).withdraw(balanceOf(WETH_));
 			payable(_msgSender()).sendValue(amount);
 		} else {
 			IERC20(token).safeTransfer(_msgSender(), amount);
@@ -757,45 +759,17 @@ abstract contract Payment is IPayment, Ownable {
 	}
 
 	function collectETH() public override returns (uint amount) {
-		if (balanceOf(WETH_) > 0) {
-			IWETH(WETH_).withdraw(balanceOf(WETH_));
-		}
-
-		if ((amount = address(this).balance) > 0) {
-			payable(owner()).sendValue(amount);
-		}
+		if (balanceOf(WETH_) > 0) IWETH(WETH_).withdraw(balanceOf(WETH_));
+		if ((amount = address(this).balance) > 0) payable(owner()).sendValue(amount);
 	}
 
 	function collectTokens(address token) public override returns (uint amount) {
-		if (token == address(0)) {
-			amount = collectETH();
-		} else if ((amount = balanceOf(token)) > 0) {
-			IERC20(token).safeTransfer(owner(), amount);
-		}
+		if (token == address(0)) amount = collectETH();
+		else if ((amount = balanceOf(token)) > 0) IERC20(token).safeTransfer(owner(), amount);
 	}
 }
 
-struct SwapParam {
-	address target;
-	bytes swapData;
-}
-
-interface IforbitspaceX is IPayment {
-	function aggregate(
-		address tokenIn,
-		address tokenOut,
-		uint amountTotal,
-		SwapParam[] memory params
-	)
-		external
-		payable
-		returns (
-			uint amountInTotal,
-			uint amountOutTotal,
-			uint[2][] memory retAmounts
-		);
-}
-
+//
 contract forbitspaceX is IforbitspaceX, Payment {
 	using SafeMath for uint;
 	using Address for address;
@@ -808,23 +782,14 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		SwapParam[] memory params
 	) private returns (uint[2][] memory retAmounts) {
 		retAmounts = new uint[2][](params.length);
-
-		if (tokenIn == address(0)) {
-			tokenIn = WETH_;
-		}
-		if (tokenOut == address(0)) {
-			tokenOut = WETH_;
-		}
-
+		if (tokenIn == address(0)) tokenIn = WETH_;
+		if (tokenOut == address(0)) tokenOut = WETH_;
 		for (uint i = 0; i < params.length; i++) {
 			uint amountIn = balanceOf(tokenIn); // amountIn before
 			uint amountOut = balanceOf(tokenOut); // amountOut before
-
 			params[i].target.functionCall(params[i].swapData, "C_S_F"); // call swap failed
-
 			amountIn = amountIn.sub(balanceOf(tokenIn)); // amountIn after
 			amountOut = balanceOf(tokenOut).sub(amountOut); // amountOut after
-
 			retAmounts[i] = [amountIn, amountOut];
 		}
 	}
@@ -850,25 +815,17 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		require(!(tokenIn == WETH_ && tokenOut == address(0)), "I_T_A");
 
 		// invalid value
-		if (tokenIn == address(0)) {
-			require((amountTotal = msg.value) > 0, "I_V");
-		} else {
-			require(msg.value == 0, "I_V");
-		}
+		if (tokenIn == address(0)) require((amountTotal = msg.value) > 0, "I_V");
+		else require(msg.value == 0, "I_V");
 
 		pay(tokenIn, amountTotal);
-
 		amountInTotal = balanceOf(tokenIn); // amountInTotal before
 		amountOutTotal = balanceOf(tokenOut); // amountOutTotal before
-
 		retAmounts = _swap(tokenIn, tokenOut, params); // call dex swaps
-
 		amountInTotal = amountInTotal.sub(balanceOf(tokenIn)); // amountInTotal after
 		amountOutTotal = balanceOf(tokenOut).sub(amountOutTotal); // amountOutTotal after
-
 		refund(tokenIn, amountTotal.sub(amountInTotal.mul(2000).div(1999), "N_E_T")); // not enough tokens with 0.05% fee
 		refund(tokenOut, amountOutTotal);
-
 		collectTokens(tokenIn);
 	}
 }
