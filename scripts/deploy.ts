@@ -2,21 +2,22 @@ import { resolve } from "path";
 import { readFileSync, writeFileSync } from "fs";
 import { run, ethers } from "hardhat";
 
-import { WETH_ADDRESS } from "./constants/addresses";
+// import { WETH_ADDRESS } from "./constants/addresses";
 
 async function main() {
   await run("compile");
   // rinkeby
-  // const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+  const WETH_ADDRESS = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
   const NEW_OWNER_ADDRESS = "";
   const contractName = "forbitspaceX";
   const factory = await ethers.getContractFactory(contractName);
   const contract = await factory.deploy(WETH_ADDRESS);
+  await contract.deployed();
   console.log(`${contractName} deployed to >>>`, contract.address);
 
   await writeContractJson(
     `../artifacts/contracts-merged/${contractName}.sol/${contractName}.json`,
-    `../abis/${contractName}.json`,
+    `../abis/${contractName}-polygon.json`,
     contract.address
   );
 

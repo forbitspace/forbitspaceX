@@ -1,11 +1,12 @@
 import { run, ethers } from "hardhat";
 
-import { address as FORBITSPACEX_ADDRESS } from "../abis/forbitspaceX.json";
+// import { address as FORBITSPACEX_ADDRESS } from "../abis/forbitspaceX.json";
 // import { WETH_ADDRESS } from "./constants/addresses";
 
 async function main() {
   // rinkeby
-  const WETH_ADDRESS = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+  const FORBITSPACEX_ADDRESS = "0x99556C7B90e91fDB35A15D2b735a7542aa4C5fC6";
+  const WETH_ADDRESS = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
 
   await run("verify:verify", {
     address: FORBITSPACEX_ADDRESS,
