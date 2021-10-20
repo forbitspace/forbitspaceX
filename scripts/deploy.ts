@@ -1,13 +1,19 @@
 import { resolve } from "path";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { run, ethers } from "hardhat";
-
-// import { WETH_ADDRESS } from "./constants/addresses";
+import { ChainId } from "./constants/chain_id";
+import { WETH_ADDRESSES } from "./constants/addresses";
 
 async function main() {
   await run("compile");
-  // rinkeby
-  const WETH_ADDRESS = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
+  const [signer] = await ethers.getSigners();
+  const chainId: ChainId = await signer.getChainId();
+
+  console.log("chainId >>>", chainId);
+
+  const WETH_ADDRESS: string = WETH_ADDRESSES[chainId];
+  console.log(WETH_ADDRESS);
+
   const NEW_OWNER_ADDRESS = "";
   const contractName = "forbitspaceX";
   const factory = await ethers.getContractFactory(contractName);
@@ -15,11 +21,12 @@ async function main() {
   await contract.deployed();
   console.log(`${contractName} deployed to >>>`, contract.address);
 
-  await writeContractJson(
-    `../artifacts/contracts-merged/${contractName}.sol/${contractName}.json`,
-    `../abis/${contractName}-polygon.json`,
-    contract.address
-  );
+  // await writeContractJson(
+  //   chainId,
+  //   contract.address,
+  //   `../artifacts/contracts/${contractName}.sol/${contractName}.json`,
+  //   `../abis/${contractName}.json`
+  // );
 
   if (NEW_OWNER_ADDRESS && NEW_OWNER_ADDRESS != "") {
     console.log("Transfer owner");
@@ -30,10 +37,30 @@ async function main() {
   console.log("success");
 }
 
-async function writeContractJson(src: string, dest: string, address: string) {
-  var data: any = await readFileSync(resolve(__dirname, src));
+async function writeContractJson(
+  chainId: ChainId,
+  address: string,
+  src: string,
+  dest: string
+) {
+  var data: any = await readFileSync(
+    resolve(__dirname, existsSync(resolve(__dirname, dest)) ? dest : src)
+  );
   data = JSON.parse(data.toString());
-  data.address = address;
+  console.log(data.addresses);
+  if (!data.addresses)
+    data.addresses = {
+      [ChainId.MAINNET]: "",
+      [ChainId.ROPSTEN]: "",
+      [ChainId.RINKEBY]: "",
+      [ChainId.GÖRLI]: "",
+      [ChainId.KOVAN]: "",
+      [ChainId.BSC_MAINNET]: "",
+      [ChainId.BSC_TESTNET]: "",
+      [ChainId.POLYGON]: "",
+      [ChainId.MUMBAI]: "",
+    };
+  data.addresses[chainId] = address;
   await writeFileSync(resolve(__dirname, dest), JSON.stringify(data));
 }
 

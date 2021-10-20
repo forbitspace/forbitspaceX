@@ -1,19 +1,22 @@
 import { run, ethers } from "hardhat";
 
-// import { address as FORBITSPACEX_ADDRESS } from "../abis/forbitspaceX.json";
-// import { WETH_ADDRESS } from "./constants/addresses";
+import { addresses as FORBITSPACEX_ADDRESSES } from "../abis/forbitspaceX.json";
+import { WETH_ADDRESSES } from "./constants/addresses";
+import { ChainId } from "./constants/chain_id";
 
 async function main() {
-  // rinkeby
-  const FORBITSPACEX_ADDRESS = "0x99556C7B90e91fDB35A15D2b735a7542aa4C5fC6";
-  const WETH_ADDRESS = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
+  const [signer] = await ethers.getSigners();
+  const chainId: ChainId = await signer.getChainId();
+
+  const FORBITSPACEX_ADDRESS = FORBITSPACEX_ADDRESSES[chainId];
+  const WETH_ADDRESS = WETH_ADDRESSES[chainId];
+
+  console.log({ chainId, FORBITSPACEX_ADDRESS, WETH_ADDRESS });
 
   await run("verify:verify", {
     address: FORBITSPACEX_ADDRESS,
     constructorArguments: [WETH_ADDRESS],
   });
-
-  console.log({ FORBITSPACEX_ADDRESS, WETH_ADDRESS });
 }
 
 main()

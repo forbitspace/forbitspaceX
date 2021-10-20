@@ -9,14 +9,14 @@ import {
 
 import {
   abi as FORBITSPACEX_ABI,
-  address as FORBITSPACEX_ADDRESS,
+  addresses as FORBITSPACEX_ADDRESSES,
 } from "../abis/forbitspaceX.json";
 import { abi as ERC20_ABI } from "../abis/IERC20.json";
 import { abi as ROUTER_V2_ABI } from "../abis/IUniswapV2Router02.json";
 import { abi as ROUTER_V3_ABI } from "../abis/ISwapRouter.json";
 
 import {
-  WETH_ADDRESS,
+  WETH_ADDRESSES,
   UNI_ADDRESS,
   SUSHI_ROUTER_ADDRESS,
   UNIV2_ROUTER_ADDRESS,
@@ -24,6 +24,7 @@ import {
 } from "./constants/addresses";
 
 import { SwapParam } from "./types/SwapParam";
+import { ChainId } from "./constants/chain_id";
 
 type SwapArgs = {
   amountIn: BigNumber;
@@ -36,9 +37,14 @@ type SwapArgs = {
 
 async function main() {
   const [signer] = await ethers.getSigners();
+  const chainId: ChainId = await signer.getChainId();
+
   const IERC20 = new utils.Interface(ERC20_ABI);
   const IRouterV2 = new utils.Interface(ROUTER_V2_ABI);
   const IRouterV3 = new utils.Interface(ROUTER_V3_ABI);
+
+  const FORBITSPACEX_ADDRESS = FORBITSPACEX_ADDRESSES[chainId];
+  const WETH_ADDRESS = WETH_ADDRESSES[chainId];
 
   const WETH: Contract = new Contract(WETH_ADDRESS, IERC20, signer);
   const UNI: Contract = new Contract(UNI_ADDRESS, IERC20, signer);
@@ -73,6 +79,7 @@ async function main() {
         tokenOutAddress: UNI_ADDRESS,
         fee: "3000",
       },
+      FORBITSPACEX_ADDRESS,
       SUSHI_ROUTER_ADDRESS,
       IRouterV2,
       IERC20
@@ -86,6 +93,7 @@ async function main() {
         tokenOutAddress: UNI_ADDRESS,
         fee: "3000",
       },
+      FORBITSPACEX_ADDRESS,
       UNIV2_ROUTER_ADDRESS,
       IRouterV2,
       IERC20
@@ -99,6 +107,7 @@ async function main() {
         tokenOutAddress: UNI_ADDRESS,
         fee: "3000",
       },
+      FORBITSPACEX_ADDRESS,
       UNIV3_ROUTER_ADDRESS,
       IRouterV3,
       IERC20
@@ -112,6 +121,7 @@ async function main() {
         tokenOutAddress: WETH_ADDRESS,
         fee: "3000",
       },
+      FORBITSPACEX_ADDRESS,
       SUSHI_ROUTER_ADDRESS,
       IRouterV2,
       IERC20
@@ -125,6 +135,7 @@ async function main() {
         tokenOutAddress: WETH_ADDRESS,
         fee: "3000",
       },
+      FORBITSPACEX_ADDRESS,
       UNIV2_ROUTER_ADDRESS,
       IRouterV2,
       IERC20
@@ -138,6 +149,7 @@ async function main() {
         tokenOutAddress: WETH_ADDRESS,
         fee: "3000",
       },
+      FORBITSPACEX_ADDRESS,
       UNIV3_ROUTER_ADDRESS,
       IRouterV3,
       IERC20
@@ -246,6 +258,7 @@ async function main() {
 
 async function getSwapData(
   swapArgs: SwapArgs,
+  forbitspaceX_address: string,
   routerAddress: string,
   IRouter: utils.Interface,
   IERC20: utils.Interface
@@ -258,7 +271,7 @@ async function getSwapData(
     getDefaultProvider()
   );
   const allowance: BigNumber = await tokenIn.allowance(
-    FORBITSPACEX_ADDRESS,
+    forbitspaceX_address,
     routerAddress
   );
 
@@ -272,7 +285,7 @@ async function getSwapData(
 
   swapParam = {
     target: routerAddress,
-    swapData: getSwapEncode(IRouter, swapArgs) || "",
+    swapData: getSwapEncode(forbitspaceX_address, IRouter, swapArgs) || "",
   };
 
   return allowance.lt(swapArgs.amountIn)
@@ -281,6 +294,7 @@ async function getSwapData(
 }
 
 function getSwapEncode(
+  forbitspaceX_address: string,
   IRouter: utils.Interface,
   swapArgs: SwapArgs
 ): string | undefined {
@@ -289,7 +303,7 @@ function getSwapEncode(
       swapArgs.amountIn.toHexString(),
       swapArgs.amountOut.toHexString(),
       [swapArgs.tokenInAddress, swapArgs.tokenOutAddress],
-      FORBITSPACEX_ADDRESS,
+      forbitspaceX_address,
       swapArgs.deadline.toHexString(),
     ]);
   } catch (error) {}
@@ -300,7 +314,7 @@ function getSwapEncode(
         tokenIn: swapArgs.tokenInAddress,
         tokenOut: swapArgs.tokenOutAddress,
         fee: swapArgs.fee,
-        recipient: FORBITSPACEX_ADDRESS,
+        recipient: forbitspaceX_address,
         deadline: swapArgs.deadline.toHexString(),
         amountIn: swapArgs.amountIn.toHexString(),
         amountOutMinimum: swapArgs.amountOut.toHexString(),
@@ -312,9 +326,15 @@ function getSwapEncode(
   return undefined;
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+let amountTotalWithFee: BigNumber = utils
+  .parseUnits("0.11", 18)
+  .mul(9995)
+  .div(10000);
+console.log("amountTotalWithFee >>>", amountTotalWithFee.toString());
+
+// main()
+//   .then(() => process.exit(0))
+//   .catch((error) => {
+//     console.error(error);
+//     process.exit(1);
+//   });
