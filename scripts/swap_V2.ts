@@ -1,21 +1,14 @@
 import { ethers } from "hardhat";
-import {
-  Contract,
-  BigNumber,
-  utils,
-  constants,
-  getDefaultProvider,
-} from "ethers";
+import { Contract, BigNumber, BigNumberish, utils } from "ethers";
 
 import {
   abi as FORBITSPACEX_ABI,
   addresses as FORBITSPACEX_ADDRESSES,
 } from "../abis/forbitspaceX.json";
 import { abi as ERC20_ABI } from "../abis/IERC20.json";
-import { abi as ROUTER_V2_ABI } from "../abis/IUniswapV2Router02.json";
-import { abi as ROUTER_V3_ABI } from "../abis/ISwapRouter.json";
 
 import {
+  ETH_ADDRESS,
   WETH_ADDRESSES,
   UNI_ADDRESS,
   SUSHI_ROUTER_ADDRESS,
@@ -23,31 +16,58 @@ import {
   UNIV3_ROUTER_ADDRESS,
 } from "./constants/addresses";
 
-import { SwapParam } from "./types/SwapParam";
 import { ChainId } from "./constants/chain_id";
 
-type SwapArgs = {
-  amountIn: BigNumber;
-  amountOut: BigNumber;
-  deadline: BigNumber;
-  tokenInAddress: string;
-  tokenOutAddress: string;
-  fee: string;
+enum DexType {
+  UNI_V2,
+  UNI_V3,
+  CURVE,
+  CURVE_UNDERLYING,
+  DODO_V1,
+  DODO_V2,
+  MSTABLE_MINT,
+  MSTABLE_SWAP,
+  MSTABLE_REDEEM,
+  BANCOR,
+  BALANCER,
+  SHELL,
+  SADDLE,
+  SMOOTHY,
+  SAKE,
+  ONE_INCH,
+}
+
+type Swap = {
+  pool: string;
+  tokenInParam: BigNumberish; // tokenInAmount / maxAmountIn / limitAmountIn
+  tokenOutParam: BigNumberish; // minAmountOut / tokenAmountOut / limitAmountOut
+  maxPrice: BigNumberish;
+};
+
+type SwapParam = {
+  dexType: DexType;
+  addressToApprove: string;
+  exchangeTarget: string;
+  swaps: Swap[];
+  path: string[];
+  tokenIn: string; // tokenFrom
+  tokenOut: string; // tokenTo
+  i: BigNumberish;
+  j: BigNumberish;
+  amountIn: BigNumberish;
+  amountOut: BigNumberish;
+  networkFee: BigNumberish;
+  deadline: BigNumberish;
 };
 
 async function main() {
-  const ETH_ADDRESS = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
-
-  const FORBITSPACEX_ADDRESS = "0xfC8af0CFADA6d9062CA090BB6C00860c0a58e25a";
-
   const [signer] = await ethers.getSigners();
+
   const chainId: ChainId = await signer.getChainId();
 
   const WETH_ADDRESS = WETH_ADDRESSES[chainId];
 
-  const IERC20 = new utils.Interface(ERC20_ABI);
-  const IRouterV2 = new utils.Interface(ROUTER_V2_ABI);
-  const IRouterV3 = new utils.Interface(ROUTER_V3_ABI);
+  const FORBITSPACEX_ADDRESS = "0xfC8af0CFADA6d9062CA090BB6C00860c0a58e25a";
 
   const forbitspaceX = await ethers.getContractAt(
     "forbitspaceX",
@@ -55,8 +75,8 @@ async function main() {
     signer
   );
 
-  const WETH: Contract = new Contract(WETH_ADDRESS, IERC20, signer);
-  const UNI: Contract = new Contract(UNI_ADDRESS, IERC20, signer);
+  const WETH: Contract = new Contract(WETH_ADDRESS, ERC20_ABI, signer);
+  const UNI: Contract = new Contract(UNI_ADDRESS, ERC20_ABI, signer);
 
   // shoud use oracle price
   let amountTotal: BigNumber = utils.parseUnits("0.15");
@@ -127,76 +147,6 @@ async function main() {
   // console.log("collectTokens >>>", collectTokens.toString());
   // const collectETH = await forbitspaceX.callStatic.collectETH();
   // console.log("collectETH >>>", collectETH.toString());
-}
-
-async function getSwapData(
-  swapArgs: SwapArgs,
-  forbitspaceX_address: string,
-  routerAddress: string,
-  IRouter: utils.Interface,
-  IERC20: utils.Interface
-): Promise<SwapParam[]> {
-  var swapParam: SwapParam;
-
-  const tokenIn = new Contract(
-    swapArgs.tokenInAddress,
-    IERC20,
-    getDefaultProvider()
-  );
-  const allowance: BigNumber = await tokenIn.allowance(
-    forbitspaceX_address,
-    routerAddress
-  );
-
-  const approveParam: SwapParam = {
-    target: swapArgs.tokenInAddress,
-    swapData: IERC20.encodeFunctionData("approve", [
-      routerAddress,
-      swapArgs.amountIn,
-    ]),
-  };
-
-  swapParam = {
-    target: routerAddress,
-    swapData: getSwapEncode(forbitspaceX_address, IRouter, swapArgs) || "",
-  };
-
-  return allowance.lt(swapArgs.amountIn)
-    ? [approveParam, swapParam]
-    : [swapParam];
-}
-
-function getSwapEncode(
-  forbitspaceX_address: string,
-  IRouter: utils.Interface,
-  swapArgs: SwapArgs
-): string | undefined {
-  try {
-    return IRouter.encodeFunctionData("swapExactTokensForTokens", [
-      swapArgs.amountIn.toHexString(),
-      swapArgs.amountOut.toHexString(),
-      [swapArgs.tokenInAddress, swapArgs.tokenOutAddress],
-      forbitspaceX_address,
-      swapArgs.deadline.toHexString(),
-    ]);
-  } catch (error) {}
-
-  try {
-    return IRouter.encodeFunctionData("exactInputSingle", [
-      {
-        tokenIn: swapArgs.tokenInAddress,
-        tokenOut: swapArgs.tokenOutAddress,
-        fee: swapArgs.fee,
-        recipient: forbitspaceX_address,
-        deadline: swapArgs.deadline.toHexString(),
-        amountIn: swapArgs.amountIn.toHexString(),
-        amountOutMinimum: swapArgs.amountOut.toHexString(),
-        sqrtPriceLimitX96: "0x00",
-      },
-    ]);
-  } catch (error) {}
-
-  return undefined;
 }
 
 main()

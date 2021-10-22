@@ -1,5 +1,6 @@
 import { ChainId } from "./chain_id";
 
+export const ETH_ADDRESS: string = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 export const UNI_ADDRESS: string = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
 export const ZERO_ADDRESS: string =
   "0x0000000000000000000000000000000000000000";
