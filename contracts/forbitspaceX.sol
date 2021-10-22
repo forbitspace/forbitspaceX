@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 pragma abicoder v2;
 
-import "./interfaces/IforbitspaceX.sol";
+import { IforbitspaceX } from "./interfaces/IforbitspaceX.sol";
 import { Payment, SafeMath, Address } from "./libraries/Payment.sol";
 
 contract forbitspaceX is IforbitspaceX, Payment {
@@ -23,7 +23,7 @@ contract forbitspaceX is IforbitspaceX, Payment {
 			amountIn = amountIn.sub(balanceOf(params[i].tokenIn)); // amountIn after
 			amountOut = balanceOf(params[i].tokenOut).sub(amountOut); // amountOut after
 
-			require(amountOut >= params[i].amountOut, "INSUFFICIENT_OUTPUT_AMOUNT");
+			require(amountOut >= params[i].amountOut, "I_O_A"); // INSUFFICIENT_OUTPUT_AMOUNT
 		}
 	}
 
@@ -53,7 +53,7 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		amountInAcutual = amountInAcutual.sub(balanceOf(tokenIn)); // amountInAcutual after
 		amountOutAcutual = balanceOf(tokenOut).sub(amountOutAcutual); // amountOutAcutual after
 
-		require(amountOutAcutual >= amountOutTotal, "INSUFFICIENT_OUTPUT_AMOUNT");
+		require(amountOutAcutual >= amountOutTotal, "I_O_A"); // INSUFFICIENT_OUTPUT_AMOUNT
 
 		refund(tokenIn, amountInTotal.sub(amountInAcutual.mul(2000).div(1999), "N_E_T")); // not enough tokens with 0.05% fee
 		refund(tokenOut, amountOutAcutual);
