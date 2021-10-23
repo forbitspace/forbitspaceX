@@ -8,25 +8,22 @@ interface IPayment {
 	function collectTokens(address token) external returns (uint amount);
 }
 
-struct SwapParam {
-	address target;
-	bytes swapData;
-}
-
 interface IforbitspaceX is IPayment {
+	struct SwapParam {
+		address addressToApprove;
+		address exchangeTarget;
+		address tokenIn; // tokenFrom
+		address tokenOut; // tokenTo
+		bytes swapData;
+	}
+
 	function aggregate(
 		address tokenIn,
 		address tokenOut,
-		uint amountTotal,
-		SwapParam[] memory params
-	)
-		external
-		payable
-		returns (
-			uint amountInTotal,
-			uint amountOutTotal,
-			uint[2][] memory retAmounts
-		);
+		uint amountInTotal,
+		address recipient,
+		SwapParam[] calldata params
+	) external payable returns (uint amountInAcutual, uint amountOutAcutual);
 }
 
 //
@@ -693,29 +690,6 @@ abstract contract Ownable is Context {
 	}
 }
 
-//
-/**
- * @dev Interface for the optional metadata functions from the ERC20 standard.
- *
- * _Available since v4.1._
- */
-interface IERC20Metadata is IERC20 {
-	/**
-	 * @dev Returns the name of the token.
-	 */
-	function name() external view returns (string memory);
-
-	/**
-	 * @dev Returns the symbol of the token.
-	 */
-	function symbol() external view returns (string memory);
-
-	/**
-	 * @dev Returns the decimals places of the token.
-	 */
-	function decimals() external view returns (uint8);
-}
-
 interface IWETH is IERC20 {
 	/// @notice Deposit ether to get wrapped ether
 	function deposit() external payable;
@@ -727,45 +701,96 @@ interface IWETH is IERC20 {
 abstract contract Payment is IPayment, Ownable {
 	using SafeMath for uint;
 	using SafeERC20 for IERC20;
-	using Address for address payable;
 
-	address public immutable WETH_;
+	address public constant ETH_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+
+	address public immutable WETH_ADDRESS;
 
 	receive() external payable {}
 
 	constructor(address _WETH) {
-		WETH_ = _WETH;
+		WETH_ADDRESS = _WETH;
+	}
+
+	function approve(
+		address addressToApprove,
+		address token,
+		uint amount
+	) internal {
+		if (IERC20(token).allowance(address(this), addressToApprove) < amount) {
+			IERC20(token).safeApprove(addressToApprove, 0);
+			IERC20(token).safeIncreaseAllowance(addressToApprove, type(uint).max);
+		}
 	}
 
 	function balanceOf(address token) internal view returns (uint bal) {
-		if (token == address(0)) token = WETH_;
+		if (token == ETH_ADDRESS) {
+			token = WETH_ADDRESS;
+		}
+
 		bal = IERC20(token).balanceOf(address(this));
 	}
 
+	function pay(
+		address payer,
+		address recipient,
+		address token,
+		uint amount
+	) internal {
+		if (amount > 0) {
+			if (payer == address(this)) {
+				if (token == ETH_ADDRESS) {
+					if (balanceOf(WETH_ADDRESS) > 0) IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
+					Address.sendValue(payable(recipient), amount);
+				} else {
+					IERC20(token).safeTransfer(recipient, amount);
+				}
+			} else {
+				if (token == ETH_ADDRESS) {
+					IWETH(WETH_ADDRESS).deposit{ value: amount }();
+				} else {
+					IERC20(token).safeTransferFrom(payer, address(this), amount);
+				}
+			}
+		}
+	}
+
 	function pay(address token, uint amount) internal {
-		if (amount == 0) revert("I_A"); // invalid amount
-		if (token == address(0)) IWETH(WETH_).deposit{ value: amount.mul(1999).div(2000) }();
-		else IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
+		if (amount > 0) {
+			if (token == ETH_ADDRESS) {
+				IWETH(WETH_ADDRESS).deposit{ value: amount }();
+			} else {
+				IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
+			}
+		}
 	}
 
 	function refund(address token, uint amount) internal {
-		if (amount == 0) return;
-		if (token == address(0)) {
-			if (balanceOf(WETH_) > 0) IWETH(WETH_).withdraw(balanceOf(WETH_));
-			payable(_msgSender()).sendValue(amount);
-		} else {
-			IERC20(token).safeTransfer(_msgSender(), amount);
+		if (amount > 0) {
+			if (token == ETH_ADDRESS) {
+				if (balanceOf(WETH_ADDRESS) > 0) IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
+				Address.sendValue(payable(_msgSender()), amount);
+			} else {
+				IERC20(token).safeTransfer(_msgSender(), amount);
+			}
 		}
 	}
 
 	function collectETH() public override returns (uint amount) {
-		if (balanceOf(WETH_) > 0) IWETH(WETH_).withdraw(balanceOf(WETH_));
-		if ((amount = address(this).balance) > 0) payable(owner()).sendValue(amount);
+		if (balanceOf(WETH_ADDRESS) > 0) {
+			IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
+		}
+		if ((amount = address(this).balance) > 0) {
+			Address.sendValue(payable(owner()), amount);
+		}
 	}
 
 	function collectTokens(address token) public override returns (uint amount) {
-		if (token == address(0)) amount = collectETH();
-		else if ((amount = balanceOf(token)) > 0) IERC20(token).safeTransfer(owner(), amount);
+		if (token == ETH_ADDRESS) {
+			amount = collectETH();
+		} else if ((amount = balanceOf(token)) > 0) {
+			IERC20(token).safeTransfer(owner(), amount);
+		}
 	}
 }
 
@@ -776,56 +801,69 @@ contract forbitspaceX is IforbitspaceX, Payment {
 
 	constructor(address _WETH) Payment(_WETH) {}
 
-	function _swap(
-		address tokenIn,
-		address tokenOut,
-		SwapParam[] memory params
-	) private returns (uint[2][] memory retAmounts) {
-		retAmounts = new uint[2][](params.length);
-		if (tokenIn == address(0)) tokenIn = WETH_;
-		if (tokenOut == address(0)) tokenOut = WETH_;
-		for (uint i = 0; i < params.length; i++) {
-			uint amountIn = balanceOf(tokenIn); // amountIn before
-			uint amountOut = balanceOf(tokenOut); // amountOut before
-			params[i].target.functionCall(params[i].swapData, "C_S_F"); // call swap failed
-			amountIn = amountIn.sub(balanceOf(tokenIn)); // amountIn after
-			amountOut = balanceOf(tokenOut).sub(amountOut); // amountOut after
-			retAmounts[i] = [amountIn, amountOut];
-		}
-	}
-
 	function aggregate(
 		address tokenIn,
 		address tokenOut,
-		uint amountTotal,
-		SwapParam[] memory params
-	)
-		public
-		payable
-		override
-		returns (
-			uint amountInTotal,
-			uint amountOutTotal,
-			uint[2][] memory retAmounts
-		)
-	{
-		// invalid tokens address
+		uint amountInTotal,
+		address recipient,
+		SwapParam[] calldata params
+	) public payable override returns (uint amountInAcutual, uint amountOutAcutual) {
+		// check invalid tokens address
 		require(!(tokenIn == tokenOut), "I_T_A");
-		require(!(tokenIn == address(0) && tokenOut == WETH_), "I_T_A");
-		require(!(tokenIn == WETH_ && tokenOut == address(0)), "I_T_A");
+		require(!(tokenIn == ETH_ADDRESS && tokenOut == WETH_ADDRESS), "I_T_A");
+		require(!(tokenIn == WETH_ADDRESS && tokenOut == ETH_ADDRESS), "I_T_A");
 
-		// invalid value
-		if (tokenIn == address(0)) require((amountTotal = msg.value) > 0, "I_V");
-		else require(msg.value == 0, "I_V");
+		// check invalid value
+		if (tokenIn == ETH_ADDRESS) {
+			amountInTotal = msg.value;
+		} else {
+			require(msg.value == 0, "I_V");
+		}
+		require(amountInTotal > 0, "I_V");
 
-		pay(tokenIn, amountTotal);
-		amountInTotal = balanceOf(tokenIn); // amountInTotal before
-		amountOutTotal = balanceOf(tokenOut); // amountOutTotal before
-		retAmounts = _swap(tokenIn, tokenOut, params); // call dex swaps
-		amountInTotal = amountInTotal.sub(balanceOf(tokenIn)); // amountInTotal after
-		amountOutTotal = balanceOf(tokenOut).sub(amountOutTotal); // amountOutTotal after
-		refund(tokenIn, amountTotal.sub(amountInTotal.mul(2000).div(1999), "N_E_T")); // not enough tokens with 0.05% fee
-		refund(tokenOut, amountOutTotal);
+		pay(_msgSender(), address(this), tokenIn, amountInTotal);
+
+		// amountAcutual before
+		amountInAcutual = balanceOf(tokenIn);
+		amountOutAcutual = balanceOf(tokenOut);
+
+		// call swap on multi dexs
+		_swap(params);
+
+		// amountAcutual after
+		amountInAcutual = amountInAcutual.sub(balanceOf(tokenIn));
+		amountOutAcutual = balanceOf(tokenOut).sub(amountOutAcutual);
+
+		pay(address(this), recipient, tokenIn, amountInTotal.sub(amountInAcutual, "E_I_T")); // EXCESSIVE_INPUT_AMOUNT
+		pay(address(this), recipient, tokenOut, amountOutAcutual.mul(9995).div(10000)); // 0.05% fee
+
+		// sweep token for owner
 		collectTokens(tokenIn);
+		collectTokens(tokenOut);
+	}
+
+	function _swap(SwapParam[] calldata params) private {
+		for (uint i = 0; i < params.length; i++) {
+			SwapParam calldata p = params[i];
+			(
+				address exchangeTarget,
+				address addressToApprove,
+				address tokenIn,
+				address tokenOut,
+				bytes calldata swapData
+			) = (p.exchangeTarget, p.addressToApprove, p.tokenIn, p.tokenOut, p.swapData);
+
+			approve(addressToApprove, tokenIn, type(uint).max);
+
+			// amountActual before
+			uint amountInActual = balanceOf(tokenIn);
+			uint amountOutActual = balanceOf(tokenOut);
+
+			exchangeTarget.functionCall(swapData, "C_S_F"); // call swap failed
+
+			// amountActual after
+			amountInActual = amountInActual.sub(balanceOf(tokenIn), "EXCESSIVE_INPUT_AMOUNT"); // EXCESSIVE_INPUT_AMOUNT
+			amountOutActual = balanceOf(tokenOut).sub(amountOutActual, "INSUFFICIENT_OUTPUT_AMOUNT"); // INSUFFICIENT_OUTPUT_AMOUNT
+		}
 	}
 }

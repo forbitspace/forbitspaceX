@@ -4,23 +4,20 @@ pragma abicoder v2;
 
 import { IPayment } from "./IPayment.sol";
 
-struct SwapParam {
-	address target;
-	bytes swapData;
-}
-
 interface IforbitspaceX is IPayment {
+	struct SwapParam {
+		address addressToApprove;
+		address exchangeTarget;
+		address tokenIn; // tokenFrom
+		address tokenOut; // tokenTo
+		bytes swapData;
+	}
+
 	function aggregate(
 		address tokenIn,
 		address tokenOut,
-		uint amountTotal,
-		SwapParam[] memory params
-	)
-		external
-		payable
-		returns (
-			uint amountInTotal,
-			uint amountOutTotal,
-			uint[2][] memory retAmounts
-		);
+		uint amountInTotal,
+		address recipient,
+		SwapParam[] calldata params
+	) external payable returns (uint amountInAcutual, uint amountOutAcutual);
 }

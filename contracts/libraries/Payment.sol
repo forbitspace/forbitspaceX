@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import { SafeERC20, IERC20, Address } from "./SafeERC20.sol";
-import { SafeMath } from "./SafeMath.sol";
-import { Ownable } from "./Ownable.sol";
+import { SafeERC20, IERC20, Address } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IPayment } from "../interfaces/IPayment.sol";
 import { IWETH } from "../interfaces/IWETH.sol";
 
