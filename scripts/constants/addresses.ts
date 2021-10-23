@@ -1,9 +1,9 @@
 import { ChainId } from "./chain_id";
 
-export const ETH_ADDRESS: string = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
-export const UNI_ADDRESS: string = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
 export const ZERO_ADDRESS: string =
   "0x0000000000000000000000000000000000000000";
+export const ETH_ADDRESS: string = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+export const UNI_ADDRESS: string = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984";
 export const SUSHI_ROUTER_ADDRESS: string =
   "0x1b02da8cb0d097eb8d57a175b88c7d8b47997506";
 export const UNIV2_ROUTER_ADDRESS: string =
