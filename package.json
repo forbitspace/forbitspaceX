@@ -4,7 +4,7 @@
   "main": "hardhat.config.ts",
   "license": "MIT",
   "scripts": {
-    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts/*.sol ./contracts-merged",
+    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-v2/*.sol ./contracts-merged",
     "prettier": "prettier --write .",
     "clean": "hardhat clean",
     "compile": "hardhat compile",

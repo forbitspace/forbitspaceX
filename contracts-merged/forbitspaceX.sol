@@ -755,27 +755,6 @@ abstract contract Payment is IPayment, Ownable {
 		}
 	}
 
-	function pay(address token, uint amount) internal {
-		if (amount > 0) {
-			if (token == ETH_ADDRESS) {
-				IWETH(WETH_ADDRESS).deposit{ value: amount }();
-			} else {
-				IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
-			}
-		}
-	}
-
-	function refund(address token, uint amount) internal {
-		if (amount > 0) {
-			if (token == ETH_ADDRESS) {
-				if (balanceOf(WETH_ADDRESS) > 0) IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
-				Address.sendValue(payable(_msgSender()), amount);
-			} else {
-				IERC20(token).safeTransfer(_msgSender(), amount);
-			}
-		}
-	}
-
 	function collectETH() public override returns (uint amount) {
 		if (balanceOf(WETH_ADDRESS) > 0) {
 			IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
@@ -807,7 +786,7 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		uint amountInTotal,
 		address recipient,
 		SwapParam[] calldata params
-	) public payable override returns (uint amountInAcutual, uint amountOutAcutual) {
+	) public payable override returns (uint amountInActual, uint amountOutActual) {
 		// check invalid tokens address
 		require(!(tokenIn == tokenOut), "I_T_A");
 		require(!(tokenIn == ETH_ADDRESS && tokenOut == WETH_ADDRESS), "I_T_A");
@@ -824,18 +803,20 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		pay(_msgSender(), address(this), tokenIn, amountInTotal);
 
 		// amountAcutual before
-		amountInAcutual = balanceOf(tokenIn);
-		amountOutAcutual = balanceOf(tokenOut);
+		amountInActual = balanceOf(tokenIn);
+		amountOutActual = balanceOf(tokenOut);
 
 		// call swap on multi dexs
 		_swap(params);
 
 		// amountAcutual after
-		amountInAcutual = amountInAcutual.sub(balanceOf(tokenIn));
-		amountOutAcutual = balanceOf(tokenOut).sub(amountOutAcutual);
+		amountInActual = amountInActual.sub(balanceOf(tokenIn));
+		amountOutActual = balanceOf(tokenOut).sub(amountOutActual);
 
-		pay(address(this), recipient, tokenIn, amountInTotal.sub(amountInAcutual, "E_I_T")); // EXCESSIVE_INPUT_AMOUNT
-		pay(address(this), recipient, tokenOut, amountOutAcutual.mul(9995).div(10000)); // 0.05% fee
+		require((amountInActual > 0) && (amountOutActual > 0), "I_A_T_A"); // incorrect actual total amounts
+
+		pay(address(this), _msgSender(), tokenIn, amountInTotal.sub(amountInActual, "N_E_T")); // not enough tokens
+		pay(address(this), recipient, tokenOut, amountOutActual.mul(9995).div(10000)); // 0.05% fee
 
 		// sweep token for owner
 		collectTokens(tokenIn);
@@ -855,15 +836,15 @@ contract forbitspaceX is IforbitspaceX, Payment {
 
 			approve(addressToApprove, tokenIn, type(uint).max);
 
-			// amountActual before
 			uint amountInActual = balanceOf(tokenIn);
 			uint amountOutActual = balanceOf(tokenOut);
 
-			exchangeTarget.functionCall(swapData, "C_S_F"); // call swap failed
+			exchangeTarget.functionCall(swapData, "L_C_F"); // low-level call failed
 
-			// amountActual after
-			amountInActual = amountInActual.sub(balanceOf(tokenIn), "EXCESSIVE_INPUT_AMOUNT"); // EXCESSIVE_INPUT_AMOUNT
-			amountOutActual = balanceOf(tokenOut).sub(amountOutActual, "INSUFFICIENT_OUTPUT_AMOUNT"); // INSUFFICIENT_OUTPUT_AMOUNT
+			amountInActual = amountInActual.sub(balanceOf(tokenIn));
+			amountOutActual = balanceOf(tokenOut).sub(amountOutActual);
+
+			require((amountInActual > 0) && (amountOutActual > 0), "I_A_A"); // incorrect actual amounts
 		}
 	}
 }
