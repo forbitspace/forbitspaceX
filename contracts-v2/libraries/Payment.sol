@@ -41,24 +41,23 @@ abstract contract Payment is IPayment, Ownable {
 	}
 
 	function pay(
-		address payer,
 		address recipient,
 		address token,
 		uint amount
 	) internal {
 		if (amount > 0) {
-			if (payer == address(this)) {
+			if (recipient == address(this)) {
+				if (token == ETH_ADDRESS) {
+					IWETH(WETH_ADDRESS).deposit{ value: amount }();
+				} else {
+					IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
+				}
+			} else {
 				if (token == ETH_ADDRESS) {
 					if (balanceOf(WETH_ADDRESS) > 0) IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
 					Address.sendValue(payable(recipient), amount);
 				} else {
 					IERC20(token).safeTransfer(recipient, amount);
-				}
-			} else {
-				if (token == ETH_ADDRESS) {
-					IWETH(WETH_ADDRESS).deposit{ value: amount }();
-				} else {
-					IERC20(token).safeTransferFrom(payer, address(this), amount);
 				}
 			}
 		}

@@ -31,7 +31,8 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		}
 		require(amountInTotal > 0, "I_V");
 
-		pay(_msgSender(), address(this), tokenIn, amountInTotal);
+		// receive tokens
+		pay(address(this), tokenIn, amountInTotal);
 
 		// amountAcutual before
 		amountInActual = balanceOf(tokenIn);
@@ -46,10 +47,11 @@ contract forbitspaceX is IforbitspaceX, Payment {
 
 		require((amountInActual > 0) && (amountOutActual > 0), "I_A_T_A"); // incorrect actual total amounts
 
-		pay(address(this), _msgSender(), tokenIn, amountInTotal.sub(amountInActual, "N_E_T")); // not enough tokens
-		pay(address(this), recipient, tokenOut, amountOutActual.mul(9995).div(10000)); // 0.05% fee
+		// refund tokens
+		pay(_msgSender(), tokenIn, amountInTotal.sub(amountInActual, "N_E_T")); // not enough tokens
+		pay(recipient, tokenOut, amountOutActual.mul(9995).div(10000)); // 0.05% fee
 
-		// sweep token for owner
+		// sweep tokens for owner
 		collectTokens(tokenIn);
 		collectTokens(tokenOut);
 	}
