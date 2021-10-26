@@ -10,6 +10,7 @@ import {
   PRIVATE_KEY_MAINNET,
   PRIVATE_KEY_POLYGON,
   PRIVATE_KEY_BSC,
+  PRIVATE_KEY_AVALANCHE,
 } from "./config";
 
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
@@ -49,6 +50,14 @@ const config: HardhatUserConfig = {
     },
     bsc_testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      accounts: [PRIVATE_KEY],
+    },
+    avalanche: {
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      accounts: [PRIVATE_KEY_AVALANCHE],
+    },
+    fuji_testnet: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
       accounts: [PRIVATE_KEY],
     },
   },
