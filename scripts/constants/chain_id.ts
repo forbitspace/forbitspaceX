@@ -8,4 +8,6 @@ export const enum ChainId {
   BSC_TESTNET = 97,
   POLYGON = 137,
   MUMBAI = 80001,
+  FUJI = 43113,
+  AVALANCHE = 43114,
 }
