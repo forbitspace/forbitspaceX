@@ -11,53 +11,73 @@ contract forbitspaceX is IforbitspaceX, Payment {
 
 	constructor(address _WETH) Payment(_WETH) {}
 
-	function _swap(SwapParam[] memory params) private {
-		for (uint i = 0; i < params.length; i++) {
-			approve(params[i].addressToApprove, params[i].tokenIn, params[i].amountIn);
-
-			uint amountIn = balanceOf(params[i].tokenIn); // amountIn before
-			uint amountOut = balanceOf(params[i].tokenOut); // amountOut before
-
-			params[i].exchangeTarget.functionCall(params[i].swapData, "C_S_F"); // call swap failed
-
-			amountIn = amountIn.sub(balanceOf(params[i].tokenIn)); // amountIn after
-			amountOut = balanceOf(params[i].tokenOut).sub(amountOut); // amountOut after
-
-			require(amountOut >= params[i].amountOut, "I_O_A"); // INSUFFICIENT_OUTPUT_AMOUNT
-		}
-	}
-
 	function aggregate(
 		address tokenIn,
 		address tokenOut,
 		uint amountInTotal,
-		uint amountOutTotal,
+		address recipient,
 		SwapParam[] calldata params
-	) public payable override returns (uint amountInAcutual, uint amountOutAcutual) {
-		// invalid tokens address
+	) public payable override returns (uint amountInActual, uint amountOutActual) {
+		// check invalid tokens address
 		require(!(tokenIn == tokenOut), "I_T_A");
 		require(!(tokenIn == ETH_ADDRESS && tokenOut == WETH_ADDRESS), "I_T_A");
 		require(!(tokenIn == WETH_ADDRESS && tokenOut == ETH_ADDRESS), "I_T_A");
 
-		// invalid value
-		if (tokenIn == ETH_ADDRESS) require((amountInTotal = msg.value) > 0, "I_V");
-		else require(msg.value == 0, "I_V");
+		// check invalid value
+		if (tokenIn == ETH_ADDRESS) {
+			amountInTotal = msg.value;
+		} else {
+			require(msg.value == 0, "I_V");
+		}
+		require(amountInTotal > 0, "I_V");
 
-		pay(tokenIn, amountInTotal);
+		// receive tokens
+		pay(address(this), tokenIn, amountInTotal);
 
-		amountInAcutual = balanceOf(tokenIn); // amountInAcutual before
-		amountOutAcutual = balanceOf(tokenOut); // amountOutAcutual before
+		// amountAcutual before
+		amountInActual = balanceOf(tokenIn);
+		amountOutActual = balanceOf(tokenOut);
 
-		_swap(params); // call dex swaps
+		// call swap on multi dexs
+		_swap(params);
 
-		amountInAcutual = amountInAcutual.sub(balanceOf(tokenIn)); // amountInAcutual after
-		amountOutAcutual = balanceOf(tokenOut).sub(amountOutAcutual); // amountOutAcutual after
+		// amountAcutual after
+		amountInActual = amountInActual.sub(balanceOf(tokenIn));
+		amountOutActual = balanceOf(tokenOut).sub(amountOutActual);
 
-		require(amountOutAcutual >= amountOutTotal, "I_O_A"); // INSUFFICIENT_OUTPUT_AMOUNT
+		require((amountInActual > 0) && (amountOutActual > 0), "I_A_T_A"); // incorrect actual total amounts
 
-		refund(tokenIn, amountInTotal.sub(amountInAcutual.mul(2000).div(1999), "N_E_T")); // not enough tokens with 0.05% fee
-		refund(tokenOut, amountOutAcutual);
+		// refund tokens
+		pay(_msgSender(), tokenIn, amountInTotal.sub(amountInActual, "N_E_T")); // not enough tokens
+		pay(recipient, tokenOut, amountOutActual.mul(9995).div(10000)); // 0.05% fee
 
+		// sweep tokens for owner
 		collectTokens(tokenIn);
+		collectTokens(tokenOut);
+	}
+
+	function _swap(SwapParam[] calldata params) private {
+		for (uint i = 0; i < params.length; i++) {
+			SwapParam calldata p = params[i];
+			(
+				address exchangeTarget,
+				address addressToApprove,
+				address tokenIn,
+				address tokenOut,
+				bytes calldata swapData
+			) = (p.exchangeTarget, p.addressToApprove, p.tokenIn, p.tokenOut, p.swapData);
+
+			approve(addressToApprove, tokenIn, type(uint).max);
+
+			uint amountInActual = balanceOf(tokenIn);
+			uint amountOutActual = balanceOf(tokenOut);
+
+			exchangeTarget.functionCall(swapData, "L_C_F"); // low-level call failed
+
+			amountInActual = amountInActual.sub(balanceOf(tokenIn));
+			amountOutActual = balanceOf(tokenOut).sub(amountOutActual);
+
+			require((amountInActual > 0) && (amountOutActual > 0), "I_A_A"); // incorrect actual amounts
+		}
 	}
 }

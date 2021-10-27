@@ -13,9 +13,6 @@ export const UNIV3_ROUTER_ADDRESS: string =
 
 export const WETH_ADDRESSES: { [chainId in ChainId]: string } = {
   [ChainId.MAINNET]: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-  [ChainId.ROPSTEN]: "",
-  [ChainId.GÖRLI]: "",
-  [ChainId.KOVAN]: "",
   [ChainId.RINKEBY]: "0xc778417e063141139fce010982780140aa0cd5ab",
   [ChainId.BSC_MAINNET]: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
   [ChainId.BSC_TESTNET]: "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",

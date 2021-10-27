@@ -10,8 +10,6 @@ interface IforbitspaceX is IPayment {
 		address exchangeTarget;
 		address tokenIn; // tokenFrom
 		address tokenOut; // tokenTo
-		uint amountIn; // amountInMax
-		uint amountOut; // amountOutMin
 		bytes swapData;
 	}
 
@@ -19,7 +17,7 @@ interface IforbitspaceX is IPayment {
 		address tokenIn,
 		address tokenOut,
 		uint amountInTotal,
-		uint amountOutTotal,
+		address recipient,
 		SwapParam[] calldata params
 	) external payable returns (uint amountInAcutual, uint amountOutAcutual);
 }

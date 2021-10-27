@@ -4,14 +4,13 @@
   "main": "hardhat.config.ts",
   "license": "MIT",
   "scripts": {
-    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-v2/*.sol ./contracts-merged",
+    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts/*.sol ./contracts-merged",
     "prettier": "prettier --write .",
     "clean": "hardhat clean",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.ts --network rinkeby",
     "verify": "hardhat run scripts/verify.ts --network rinkeby",
-    "swap:web3": "hardhat run scripts/swap_web3.ts --network rinkeby",
-    "swap:ethers": "hardhat run scripts/swap_ethers.ts --network rinkeby"
+    "swap": "hardhat run scripts/swap_ethers.ts --network rinkeby"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",

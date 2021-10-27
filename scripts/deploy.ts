@@ -51,10 +51,7 @@ async function writeContractJson(
   if (!data.addresses)
     data.addresses = {
       [ChainId.MAINNET]: "",
-      [ChainId.ROPSTEN]: "",
       [ChainId.RINKEBY]: "",
-      [ChainId.GÖRLI]: "",
-      [ChainId.KOVAN]: "",
       [ChainId.BSC_MAINNET]: "",
       [ChainId.BSC_TESTNET]: "",
       [ChainId.POLYGON]: "",

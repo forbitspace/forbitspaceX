@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import { SafeERC20, IERC20, Address } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { SafeERC20, IERC20, Address } from "./SafeERC20.sol";
+import { SafeMath } from "./SafeMath.sol";
+import { Ownable } from "./Ownable.sol";
 import { IPayment } from "../interfaces/IPayment.sol";
 import { IWETH } from "../interfaces/IWETH.sol";
 
@@ -40,27 +40,26 @@ abstract contract Payment is IPayment, Ownable {
 		bal = IERC20(token).balanceOf(address(this));
 	}
 
-	function pay(address token, uint amount) internal {
-		if (amount == 0) {
-			revert("I_A"); // invalid amount
-		}
-		if (token == ETH_ADDRESS) {
-			IWETH(WETH_ADDRESS).deposit{ value: amount.mul(1999).div(2000) }();
-		} else {
-			IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
-		}
-	}
-
-	function refund(address token, uint amount) internal {
-		if (amount == 0) {
-			return;
-		}
-
-		if (token == ETH_ADDRESS) {
-			if (balanceOf(WETH_ADDRESS) > 0) IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
-			Address.sendValue(payable(_msgSender()), amount);
-		} else {
-			IERC20(token).safeTransfer(_msgSender(), amount);
+	function pay(
+		address recipient,
+		address token,
+		uint amount
+	) internal {
+		if (amount > 0) {
+			if (recipient == address(this)) {
+				if (token == ETH_ADDRESS) {
+					IWETH(WETH_ADDRESS).deposit{ value: amount }();
+				} else {
+					IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
+				}
+			} else {
+				if (token == ETH_ADDRESS) {
+					if (balanceOf(WETH_ADDRESS) > 0) IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
+					Address.sendValue(payable(recipient), amount);
+				} else {
+					IERC20(token).safeTransfer(recipient, amount);
+				}
+			}
 		}
 	}
 
