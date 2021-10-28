@@ -22,7 +22,7 @@ yarn install
 
 Copy _.env_ file.
 
-````bash![logo](./assets/images/Logo-1-04.png)
+````bash!
 
 # forbitspaceX smart contract
 
