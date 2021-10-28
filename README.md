@@ -1,4 +1,8 @@
-![logo](./assets/images/Logo-1-04.png)
+<div align="center">
+  <img src="./assets/images/Logo-1-04.png" width="400" alt="forbitspace"/>
+</div>
+
+</br>
 
 # forbitspaceX smart contract
 
