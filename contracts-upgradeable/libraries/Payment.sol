@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20, IERC20, Address } from "./SafeERC20.sol";
 import { SafeMath } from "./SafeMath.sol";
-import "./OwnableUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { IPayment } from "../interfaces/IPayment.sol";
 import { IWETH } from "../interfaces/IWETH.sol";
 
@@ -17,12 +17,10 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 
 	receive() external payable {}
 
-	function initialize(address _WETH) internal initializer {
+	function initialize(address _WETH) initializer public {
 		OwnableUpgradeable.__Ownable_init();
 		WETH_ADDRESS = _WETH;
 	}
-
-	constructor(address _WETH) {}
 
 	function approve(
 		address addressToApprove,

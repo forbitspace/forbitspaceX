@@ -2,6 +2,7 @@ import { task, HardhatUserConfig } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-web3";
+import "@openzeppelin/hardhat-upgrades";
 import "@nomiclabs/hardhat-etherscan";
 import {
   API_KEY,

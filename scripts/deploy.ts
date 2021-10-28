@@ -1,6 +1,6 @@
 import { resolve } from "path";
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { run, ethers } from "hardhat";
+import { run, ethers, upgrades } from "hardhat";
 import { ChainId } from "./constants/chain_id";
 import { WETH_ADDRESSES } from "./constants/addresses";
 
@@ -17,7 +17,7 @@ async function main() {
   const NEW_OWNER_ADDRESS = "";
   const contractName = "forbitspaceX";
   const factory = await ethers.getContractFactory(contractName);
-  const contract = await factory.deploy(WETH_ADDRESS);
+  const contract = await upgrades.deployProxy(factory, [WETH_ADDRESS]);
   await contract.deployed();
   console.log(`${contractName} deployed to >>>`, contract.address);
 
