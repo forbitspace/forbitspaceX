@@ -11,7 +11,7 @@ Use the package manager *[npm](https://nodejs.org/en/download/)* to install pack
 npm install
 ```
 
-Use the package manager *[yarn](https://yarnpkg.com/getting-started/install)*.
+Use the package manager *[yarn](https://yarnpkg.com/getting-started/install)* to install package.
 
 ```bash
 yarn install
