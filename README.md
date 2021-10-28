@@ -2,7 +2,7 @@
 
 # forbitspaceX smart contract 
 
-**forbitspaceX** is a DeFi aggregator, offering access to the deepest liquidity and the best token swap rates on various DEXes, including partial fill and the ability to find the best swap paths across multiple liquidity sources.
+**forbitspace** is a DeFi aggregator, offering access to the deepest liquidity and the best token swap rates on various DEXes, including partial fill and the ability to find the best swap paths across multiple liquidity sources.
 
 ## Installation
 
