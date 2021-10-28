@@ -38,13 +38,13 @@ PRIVATE_KEY_AVALANCHE =
 
 ## Usage
 
-Deploy forbitspaceX smart contract.
+Deploy forbitspaceX smart contract on rinkeby testnet.
 
 ```bash
 npm run deploy
 ```
 
-Verify forbitspaceX smart contract.
+Verify forbitspaceX smart contract on rinkeby testnet.
 
 ```bash
 npm run verify
