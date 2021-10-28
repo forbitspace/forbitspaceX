@@ -4,9 +4,10 @@
   "main": "hardhat.config.ts",
   "license": "MIT",
   "scripts": {
-    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts/*.sol ./contracts-merged",
-    "prettier": "prettier --write .",
     "clean": "hardhat clean",
+    "prettier": "prettier --write .",
+    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts/*.sol ./contracts-merged",
+    "precompile": "npm run build-contracts",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.ts --network rinkeby",
     "verify": "hardhat run scripts/verify.ts --network rinkeby",
@@ -35,8 +36,6 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
-    "@openzeppelin/contracts-upgradeable": "^4.3.2",
-    "@uniswap/v2-periphery": "^1.1.0-beta.0",
-    "@uniswap/v3-periphery": "^1.2.1"
+    "@openzeppelin/contracts-upgradeable": "^4.3.2"
   }
 }
