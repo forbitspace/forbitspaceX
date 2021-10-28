@@ -62,10 +62,6 @@ npm run verify
 
 - **Ethereum**: **_[`0xb3FeF4B71A4EDB6f1BD51bf9417876042B936dd6`](https://etherscan.io/address/0xb3FeF4B71A4EDB6f1BD51bf9417876042B936dd6#code)_**
 
-- **Binance Smart Chain**: **_[`0xb3FeF4B71A4EDB6f1BD51bf9417876042B936dd6`](https://bscscan.com/address/0xb3FeF4B71A4EDB6f1BD51bf9417876042B936dd6#code)_**
-
-- **Polygon**: **_[`0xb3FeF4B71A4EDB6f1BD51bf9417876042B936dd6`](https://polygonscan.com/address/0xb3FeF4B71A4EDB6f1BD51bf9417876042B936dd6#code)_**
-
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
