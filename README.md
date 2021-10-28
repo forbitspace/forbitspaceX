@@ -22,30 +22,6 @@ yarn install
 
 Copy _.env_ file.
 
-````bash!
-
-# forbitspaceX smart contract
-
-**forbitspaceX** is a DeFi aggregator, offering access to the deepest liquidity and the best token swap rates on various DEXes, including partial fill and the ability to find the best swap paths across multiple liquidity sources.
-
-## Installation
-
-Use the package manager _[npm](https://nodejs.org/en/download/)_ to install package.
-
-```bash
-npm install
-````
-
-Use the package manager _[yarn](https://yarnpkg.com/getting-started/install)_ to install package.
-
-```bash
-yarn install
-```
-
-## Configuration
-
-Copy _.env_ file.
-
 ```bash
 cp -R .env.example .env
 ```
