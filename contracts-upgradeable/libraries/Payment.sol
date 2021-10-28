@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.2;
 
 import { SafeERC20, IERC20, Address } from "./SafeERC20.sol";
 import { SafeMath } from "./SafeMath.sol";
@@ -17,7 +17,7 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 
 	receive() external payable {}
 
-	function initialize(address _WETH) initializer public {
+	function initialize(address _WETH) public virtual initializer {
 		OwnableUpgradeable.__Ownable_init();
 		WETH_ADDRESS = _WETH;
 	}

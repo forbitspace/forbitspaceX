@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 pragma abicoder v2;
+
 
 interface IPayment {
 	function collectETH() external returns (uint amount);
@@ -26,7 +26,7 @@ interface IforbitspaceX is IPayment {
 	) external payable returns (uint amountInAcutual, uint amountOutAcutual);
 }
 
-//
+// 
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
@@ -105,7 +105,7 @@ interface IERC20 {
 	event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-//
+// 
 /**
  * @dev Collection of functions related to the address type
  */
@@ -615,7 +615,7 @@ library SafeMath {
 	}
 }
 
-//
+// 
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -772,7 +772,7 @@ abstract contract Payment is IPayment, Ownable {
 	}
 }
 
-//
+// 
 contract forbitspaceX is IforbitspaceX, Payment {
 	using SafeMath for uint;
 	using Address for address;

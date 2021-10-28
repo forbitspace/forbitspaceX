@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.8.0;
+
+pragma solidity ^0.8.2;
 pragma abicoder v2;
 
 import { IforbitspaceX } from "./interfaces/IforbitspaceX.sol";
 import { Payment, SafeMath, Address } from "./libraries/Payment.sol";
-import {UUPSUpgradeable} from '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract forbitspaceX is IforbitspaceX, Payment, UUPSUpgradeable {
 	using SafeMath for uint;
 	using Address for address;
 
-	function initialize(address _WETH) override public initializer {
+	function initialize(address _WETH) public override initializer {
 		Payment.initialize(_WETH);
 		WETH_ADDRESS = _WETH;
 	}

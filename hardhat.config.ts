@@ -73,6 +73,15 @@ const config: HardhatUserConfig = {
           },
         },
       },
+      {
+        version: "0.8.2",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1000000,
+          },
+        },
+      },
     ],
   },
   etherscan: {
@@ -81,7 +90,7 @@ const config: HardhatUserConfig = {
     apiKey: API_KEY,
   },
   paths: {
-    sources: "./contracts-merged",
+    sources: "./contracts-upgradeable",
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",
