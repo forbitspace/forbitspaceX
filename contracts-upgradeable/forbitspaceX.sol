@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-pragma solidity ^0.8.2;
+pragma solidity ^0.8.8;
 pragma abicoder v2;
 
 import { IforbitspaceX } from "./interfaces/IforbitspaceX.sol";
@@ -11,12 +11,11 @@ contract forbitspaceX is IforbitspaceX, Payment, UUPSUpgradeable {
 	using SafeMath for uint;
 	using Address for address;
 
+	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
 	function initialize(address _WETH) public override initializer {
 		Payment.initialize(_WETH);
-		WETH_ADDRESS = _WETH;
 	}
-
-	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
 	function aggregate(
 		address tokenIn,
@@ -61,18 +60,20 @@ contract forbitspaceX is IforbitspaceX, Payment, UUPSUpgradeable {
 		// sweep tokens for owner
 		collectTokens(tokenIn);
 		collectTokens(tokenOut);
+
+		emit AggregateSwapped(tokenIn, tokenOut, amountInActual, amountOutActual, recipient);
 	}
 
 	function _swap(SwapParam[] calldata params) private {
 		for (uint i = 0; i < params.length; i++) {
 			SwapParam calldata p = params[i];
 			(
-				address exchangeTarget,
 				address addressToApprove,
+				address exchangeTarget,
 				address tokenIn,
 				address tokenOut,
 				bytes calldata swapData
-			) = (p.exchangeTarget, p.addressToApprove, p.tokenIn, p.tokenOut, p.swapData);
+			) = (p.addressToApprove, p.exchangeTarget, p.tokenIn, p.tokenOut, p.swapData);
 
 			approve(addressToApprove, tokenIn, type(uint).max);
 

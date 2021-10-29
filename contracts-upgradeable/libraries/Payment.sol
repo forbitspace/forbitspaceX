@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.8.2;
+
+pragma solidity ^0.8.8;
 
 import { SafeERC20, IERC20, Address } from "./SafeERC20.sol";
 import { SafeMath } from "./SafeMath.sol";
@@ -11,15 +12,22 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 	using SafeMath for uint;
 	using SafeERC20 for IERC20;
 
-	address public constant ETH_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
-
+	address public feeTo;
 	address public WETH_ADDRESS;
+	address public constant ETH_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
 	receive() external payable {}
 
 	function initialize(address _WETH) public virtual initializer {
-		OwnableUpgradeable.__Ownable_init();
+		__Ownable_init();
+		setFeeTo(owner());
 		WETH_ADDRESS = _WETH;
+	}
+
+	function setFeeTo(address newFeeTo) public override onlyOwner {
+		address oldFeeTo = feeTo;
+		feeTo = newFeeTo;
+		emit FeeToTransfered(oldFeeTo, newFeeTo);
 	}
 
 	function approve(
@@ -68,8 +76,9 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 		if (balanceOf(WETH_ADDRESS) > 0) {
 			IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
 		}
+
 		if ((amount = address(this).balance) > 0) {
-			Address.sendValue(payable(owner()), amount);
+			Address.sendValue(payable(feeTo), amount);
 		}
 	}
 
@@ -77,7 +86,11 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 		if (token == ETH_ADDRESS) {
 			amount = collectETH();
 		} else if ((amount = balanceOf(token)) > 0) {
-			IERC20(token).safeTransfer(owner(), amount);
+			IERC20(token).safeTransfer(feeTo, amount);
+		}
+
+		if (amount > 0) {
+			emit FeeCollected(token, amount);
 		}
 	}
 }

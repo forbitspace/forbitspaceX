@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-pragma solidity ^0.8.2;
+pragma solidity ^0.8.8;
 pragma abicoder v2;
 
 import { IPayment } from "./IPayment.sol";
 
 interface IforbitspaceX is IPayment {
+	event AggregateSwapped(address tokenIn, address tokenOut, uint amountIn, uint amountOut, address recipient);
+
 	struct SwapParam {
 		address addressToApprove;
 		address exchangeTarget;

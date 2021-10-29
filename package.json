@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "hardhat clean",
     "prettier": "prettier --write .",
-    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts/*.sol ./contracts-merged",
+    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-upgradeable/*.sol ./contracts-merged",
     "precompile": "npm run build-contracts",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.ts --network rinkeby",
