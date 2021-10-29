@@ -13,8 +13,8 @@ contract forbitspaceX is IforbitspaceX, Payment, UUPSUpgradeable {
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-	function initialize(address _WETH) public override initializer {
-		Payment.initialize(_WETH);
+	function initialize(address newWETH) public override initializer {
+		Payment.initialize(newWETH);
 	}
 
 	function aggregate(
@@ -26,11 +26,11 @@ contract forbitspaceX is IforbitspaceX, Payment, UUPSUpgradeable {
 	) public payable override returns (uint amountInActual, uint amountOutActual) {
 		// check invalid tokens address
 		require(!(tokenIn == tokenOut), "I_T_A");
-		require(!(tokenIn == ETH_ADDRESS && tokenOut == WETH_ADDRESS), "I_T_A");
-		require(!(tokenIn == WETH_ADDRESS && tokenOut == ETH_ADDRESS), "I_T_A");
+		require(!(tokenIn == ETH() && tokenOut == WETH()), "I_T_A");
+		require(!(tokenIn == WETH() && tokenOut == ETH()), "I_T_A");
 
 		// check invalid value
-		if (tokenIn == ETH_ADDRESS) {
+		if (tokenIn == ETH()) {
 			amountInTotal = msg.value;
 		} else {
 			require(msg.value == 0, "I_V");

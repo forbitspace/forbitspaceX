@@ -2,31 +2,44 @@
 
 pragma solidity ^0.8.8;
 
-import { SafeERC20, IERC20, Address } from "./SafeERC20.sol";
+import { IPayment } from "../interfaces/IPayment.sol";
+import { IWETH, IERC20 } from "../interfaces/IWETH.sol";
+import { SafeERC20, Address } from "./SafeERC20.sol";
 import { SafeMath } from "./SafeMath.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { IPayment } from "../interfaces/IPayment.sol";
-import { IWETH } from "../interfaces/IWETH.sol";
 
 abstract contract Payment is IPayment, OwnableUpgradeable {
 	using SafeMath for uint;
 	using SafeERC20 for IERC20;
 
-	address public feeTo;
-	address public WETH_ADDRESS;
-	address public constant ETH_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+	address private _feeTo;
+	address private _WETH;
+	address private _ETH = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
 	receive() external payable {}
 
-	function initialize(address _WETH) public virtual initializer {
+	function initialize(address newWETH) public virtual initializer {
 		__Ownable_init();
 		setFeeTo(owner());
-		WETH_ADDRESS = _WETH;
+		_WETH = newWETH;
+	}
+
+	function WETH() public view override returns (address) {
+		return _WETH;
+	}
+
+	function ETH() public view override returns (address) {
+		return _ETH;
+	}
+
+	function feeTo() public view override returns (address) {
+		return _feeTo;
 	}
 
 	function setFeeTo(address newFeeTo) public override onlyOwner {
-		address oldFeeTo = feeTo;
-		feeTo = newFeeTo;
+		require(newFeeTo != address(0), "Z"); // zero-address
+		address oldFeeTo = _feeTo;
+		_feeTo = newFeeTo;
 		emit FeeToTransfered(oldFeeTo, newFeeTo);
 	}
 
@@ -42,8 +55,8 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 	}
 
 	function balanceOf(address token) internal view returns (uint bal) {
-		if (token == ETH_ADDRESS) {
-			token = WETH_ADDRESS;
+		if (token == _ETH) {
+			token = _WETH;
 		}
 
 		bal = IERC20(token).balanceOf(address(this));
@@ -56,14 +69,14 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 	) internal {
 		if (amount > 0) {
 			if (recipient == address(this)) {
-				if (token == ETH_ADDRESS) {
-					IWETH(WETH_ADDRESS).deposit{ value: amount }();
+				if (token == _ETH) {
+					IWETH(_WETH).deposit{ value: amount }();
 				} else {
 					IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
 				}
 			} else {
-				if (token == ETH_ADDRESS) {
-					if (balanceOf(WETH_ADDRESS) > 0) IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
+				if (token == _ETH) {
+					if (balanceOf(_WETH) > 0) IWETH(_WETH).withdraw(balanceOf(_WETH));
 					Address.sendValue(payable(recipient), amount);
 				} else {
 					IERC20(token).safeTransfer(recipient, amount);
@@ -73,20 +86,20 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 	}
 
 	function collectETH() public override returns (uint amount) {
-		if (balanceOf(WETH_ADDRESS) > 0) {
-			IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
+		if (balanceOf(_WETH) > 0) {
+			IWETH(_WETH).withdraw(balanceOf(_WETH));
 		}
 
 		if ((amount = address(this).balance) > 0) {
-			Address.sendValue(payable(feeTo), amount);
+			Address.sendValue(payable(_feeTo), amount);
 		}
 	}
 
 	function collectTokens(address token) public override returns (uint amount) {
-		if (token == ETH_ADDRESS) {
+		if (token == _ETH) {
 			amount = collectETH();
 		} else if ((amount = balanceOf(token)) > 0) {
-			IERC20(token).safeTransfer(feeTo, amount);
+			IERC20(token).safeTransfer(_feeTo, amount);
 		}
 
 		if (amount > 0) {

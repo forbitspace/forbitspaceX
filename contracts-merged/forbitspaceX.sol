@@ -8,6 +8,12 @@ interface IPayment {
 
 	event FeeToTransfered(address from, address to);
 
+	function WETH() external view returns (address);
+
+	function ETH() external view returns (address);
+
+	function feeTo() external view returns (address);
+
 	function setFeeTo(address _feeTo) external;
 
 	function collectETH() external returns (uint amount);
@@ -35,10 +41,6 @@ interface IforbitspaceX is IPayment {
 	) external payable returns (uint amountInAcutual, uint amountOutAcutual);
 }
 
-//
-/**
- * @dev Interface of the ERC20 standard as defined in the EIP.
- */
 interface IERC20 {
 	/**
 	 * @dev Returns the amount of tokens in existence.
@@ -113,6 +115,19 @@ interface IERC20 {
 	 */
 	event Approval(address indexed owner, address indexed spender, uint value);
 }
+
+interface IWETH is IERC20 {
+	/// @notice Deposit ether to get wrapped ether
+	function deposit() external payable;
+
+	/// @notice Withdraw wrapped ether to get ether
+	function withdraw(uint) external;
+}
+
+//
+/**
+ * @dev Interface of the ERC20 standard as defined in the EIP.
+ */
 
 //
 /**
@@ -758,33 +773,38 @@ abstract contract OwnableUpgradeable is Initializable, ContextUpgradeable {
 	uint[49] private __gap;
 }
 
-interface IWETH is IERC20 {
-	/// @notice Deposit ether to get wrapped ether
-	function deposit() external payable;
-
-	/// @notice Withdraw wrapped ether to get ether
-	function withdraw(uint) external;
-}
-
 abstract contract Payment is IPayment, OwnableUpgradeable {
 	using SafeMath for uint;
 	using SafeERC20 for IERC20;
 
-	address public feeTo;
-	address public WETH_ADDRESS;
-	address public constant ETH_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+	address private _feeTo;
+	address private _WETH;
+	address private _ETH = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
 	receive() external payable {}
 
-	function initialize(address _WETH) public virtual initializer {
+	function initialize(address newWETH) public virtual initializer {
 		__Ownable_init();
 		setFeeTo(owner());
-		WETH_ADDRESS = _WETH;
+		_WETH = newWETH;
+	}
+
+	function WETH() public view override returns (address) {
+		return _WETH;
+	}
+
+	function ETH() public view override returns (address) {
+		return _ETH;
+	}
+
+	function feeTo() public view override returns (address) {
+		return _feeTo;
 	}
 
 	function setFeeTo(address newFeeTo) public override onlyOwner {
-		address oldFeeTo = feeTo;
-		feeTo = newFeeTo;
+		require(newFeeTo != address(0), "Z"); // zero-address
+		address oldFeeTo = _feeTo;
+		_feeTo = newFeeTo;
 		emit FeeToTransfered(oldFeeTo, newFeeTo);
 	}
 
@@ -800,8 +820,8 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 	}
 
 	function balanceOf(address token) internal view returns (uint bal) {
-		if (token == ETH_ADDRESS) {
-			token = WETH_ADDRESS;
+		if (token == _ETH) {
+			token = _WETH;
 		}
 
 		bal = IERC20(token).balanceOf(address(this));
@@ -814,14 +834,14 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 	) internal {
 		if (amount > 0) {
 			if (recipient == address(this)) {
-				if (token == ETH_ADDRESS) {
-					IWETH(WETH_ADDRESS).deposit{ value: amount }();
+				if (token == _ETH) {
+					IWETH(_WETH).deposit{ value: amount }();
 				} else {
 					IERC20(token).safeTransferFrom(_msgSender(), address(this), amount);
 				}
 			} else {
-				if (token == ETH_ADDRESS) {
-					if (balanceOf(WETH_ADDRESS) > 0) IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
+				if (token == _ETH) {
+					if (balanceOf(_WETH) > 0) IWETH(_WETH).withdraw(balanceOf(_WETH));
 					Address.sendValue(payable(recipient), amount);
 				} else {
 					IERC20(token).safeTransfer(recipient, amount);
@@ -831,20 +851,20 @@ abstract contract Payment is IPayment, OwnableUpgradeable {
 	}
 
 	function collectETH() public override returns (uint amount) {
-		if (balanceOf(WETH_ADDRESS) > 0) {
-			IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
+		if (balanceOf(_WETH) > 0) {
+			IWETH(_WETH).withdraw(balanceOf(_WETH));
 		}
 
 		if ((amount = address(this).balance) > 0) {
-			Address.sendValue(payable(feeTo), amount);
+			Address.sendValue(payable(_feeTo), amount);
 		}
 	}
 
 	function collectTokens(address token) public override returns (uint amount) {
-		if (token == ETH_ADDRESS) {
+		if (token == _ETH) {
 			amount = collectETH();
 		} else if ((amount = balanceOf(token)) > 0) {
-			IERC20(token).safeTransfer(feeTo, amount);
+			IERC20(token).safeTransfer(_feeTo, amount);
 		}
 
 		if (amount > 0) {
@@ -1413,8 +1433,8 @@ contract forbitspaceX is IforbitspaceX, Payment, UUPSUpgradeable {
 
 	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-	function initialize(address _WETH) public override initializer {
-		Payment.initialize(_WETH);
+	function initialize(address newWETH) public override initializer {
+		Payment.initialize(newWETH);
 	}
 
 	function aggregate(
@@ -1426,11 +1446,11 @@ contract forbitspaceX is IforbitspaceX, Payment, UUPSUpgradeable {
 	) public payable override returns (uint amountInActual, uint amountOutActual) {
 		// check invalid tokens address
 		require(!(tokenIn == tokenOut), "I_T_A");
-		require(!(tokenIn == ETH_ADDRESS && tokenOut == WETH_ADDRESS), "I_T_A");
-		require(!(tokenIn == WETH_ADDRESS && tokenOut == ETH_ADDRESS), "I_T_A");
+		require(!(tokenIn == ETH() && tokenOut == WETH()), "I_T_A");
+		require(!(tokenIn == WETH() && tokenOut == ETH()), "I_T_A");
 
 		// check invalid value
-		if (tokenIn == ETH_ADDRESS) {
+		if (tokenIn == ETH()) {
 			amountInTotal = msg.value;
 		} else {
 			require(msg.value == 0, "I_V");

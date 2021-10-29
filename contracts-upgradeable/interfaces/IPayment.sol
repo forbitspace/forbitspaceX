@@ -7,6 +7,12 @@ interface IPayment {
 
 	event FeeToTransfered(address from, address to);
 
+	function WETH() external view returns (address);
+
+	function ETH() external view returns (address);
+
+	function feeTo() external view returns (address);
+
 	function setFeeTo(address _feeTo) external;
 
 	function collectETH() external returns (uint amount);
