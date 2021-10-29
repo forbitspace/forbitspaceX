@@ -17,7 +17,9 @@ async function main() {
   const NEW_OWNER_ADDRESS = "";
   const contractName = "forbitspaceX";
   const factory = await ethers.getContractFactory(contractName);
-  const contract = await upgrades.deployProxy(factory, [WETH_ADDRESS]);
+  const contract = await upgrades.deployProxy(factory, [WETH_ADDRESS], {
+    kind: "uups",
+  });
   await contract.deployed();
   console.log(`${contractName} deployed to >>>`, contract.address);
 

@@ -5,17 +5,10 @@ pragma abicoder v2;
 
 import { IforbitspaceX } from "./interfaces/IforbitspaceX.sol";
 import { Payment, SafeMath, Address } from "./libraries/Payment.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract forbitspaceX is IforbitspaceX, Payment, UUPSUpgradeable {
+contract forbitspaceX is IforbitspaceX, Payment {
 	using SafeMath for uint;
 	using Address for address;
-
-	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
-
-	function initialize(address newWETH) public override initializer {
-		Payment.initialize(newWETH);
-	}
 
 	function aggregate(
 		address tokenIn,
