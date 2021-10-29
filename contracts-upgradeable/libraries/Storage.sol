@@ -7,9 +7,9 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 abstract contract Storage is IStorage, OwnableUpgradeable, UUPSUpgradeable {
-	address private _feeTo;
-	address private _WETH;
 	address private _ETH = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+	address private _WETH;
+	address private _feeTo;
 
 	receive() external payable {}
 
@@ -25,12 +25,12 @@ abstract contract Storage is IStorage, OwnableUpgradeable, UUPSUpgradeable {
 		return "1.0.0";
 	}
 
-	function WETH() public view override returns (address) {
-		return _WETH;
-	}
-
 	function ETH() public view override returns (address) {
 		return _ETH;
+	}
+
+	function WETH() public view override returns (address) {
+		return _WETH;
 	}
 
 	function feeTo() public view override returns (address) {

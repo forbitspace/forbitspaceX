@@ -7,9 +7,9 @@ interface IStorage {
 
 	function version() external pure returns (string memory);
 
-	function WETH() external view returns (address);
-
 	function ETH() external view returns (address);
+
+	function WETH() external view returns (address);
 
 	function feeTo() external view returns (address);
 
