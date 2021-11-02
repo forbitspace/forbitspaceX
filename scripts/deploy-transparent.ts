@@ -12,16 +12,28 @@ async function main() {
   console.log("chainId >>>", chainId);
 
   const WETH_ADDRESS: string = WETH_ADDRESSES[chainId];
-  console.log(WETH_ADDRESS);
+
+  const forbitspaceX_factory = await ethers.getContractFactory("forbitspaceX");
 
   const NEW_OWNER_ADDRESS = "";
-  const contractName = "forbitspaceX";
-  const factory = await ethers.getContractFactory(contractName);
-  const contract = await upgrades.deployProxy(factory, [WETH_ADDRESS], {
-    kind: "uups",
-  });
-  await contract.deployed();
-  console.log(`${contractName} deployed to >>>`, contract.address);
+  const proxy = await upgrades.deployProxy(forbitspaceX_factory, [
+    WETH_ADDRESS,
+  ]);
+  await proxy.deployed();
+
+  console.log(`Proxy admin deployed to >>>`, proxy.address);
+
+  if (NEW_OWNER_ADDRESS && NEW_OWNER_ADDRESS != "") {
+    console.log("Transfer owner");
+
+    const forbitspaceX = await ethers.getContractAt(
+      "forbitspaceX",
+      proxy.address,
+      signer
+    );
+
+    await forbitspaceX.transferOwnership(NEW_OWNER_ADDRESS);
+  }
 
   // await writeContractJson(
   //   chainId,
@@ -29,12 +41,6 @@ async function main() {
   //   `../artifacts/contracts/${contractName}.sol/${contractName}.json`,
   //   `../abis/${contractName}.json`
   // );
-
-  if (NEW_OWNER_ADDRESS && NEW_OWNER_ADDRESS != "") {
-    console.log("Transfer owner");
-
-    await contract.transferOwnership(NEW_OWNER_ADDRESS);
-  }
 
   console.log("success");
 }

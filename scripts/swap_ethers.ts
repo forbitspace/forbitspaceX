@@ -1,16 +1,6 @@
 import { ethers } from "hardhat";
-import {
-  Contract,
-  BigNumber,
-  utils,
-  constants,
-  getDefaultProvider,
-} from "ethers";
+import { Contract, BigNumber, BigNumberish, utils, constants } from "ethers";
 
-import {
-  abi as FORBITSPACEX_ABI,
-  addresses as FORBITSPACEX_ADDRESSES,
-} from "../abis/forbitspaceX.json";
 import { abi as ERC20_ABI } from "../abis/IERC20.json";
 import { abi as ROUTER_V2_ABI } from "../abis/IUniswapV2Router02.json";
 import { abi as ROUTER_V3_ABI } from "../abis/ISwapRouter.json";
@@ -21,36 +11,54 @@ import {
   SUSHI_ROUTER_ADDRESS,
   UNIV2_ROUTER_ADDRESS,
   UNIV3_ROUTER_ADDRESS,
+  ETH_ADDRESS,
 } from "./constants/addresses";
 
-import { SwapParam } from "./types/SwapParam";
 import { ChainId } from "./constants/chain_id";
 
-type SwapArgs = {
-  amountIn: BigNumber;
-  amountOut: BigNumber;
-  deadline: BigNumber;
-  tokenInAddress: string;
-  tokenOutAddress: string;
-  fee: string;
+const enum DexType {
+  UNI_V2,
+  UNI_V3,
+}
+
+const enum Fee {
+  LOW = "500",
+  MEDIUM = "3000",
+  HIGH = "10000",
+}
+
+type AggregateParam = {
+  tokenIn: string;
+  tokenOut: string;
+  amountInTotal: BigNumberish;
+  recipient: string;
+  sParams: SwapParam[];
 };
+
+type SwapParam = {
+  addressToApprove: string;
+  exchangeTarget: string;
+  tokenIn: string; // tokenFrom
+  tokenOut: string; // tokenTo
+  swapData: string;
+};
+
+const FORBITSPACEX_ADDRESS = "0x06B526413B5F42acc6005c8F236384B38CAC93ec";
 
 async function main() {
   const [signer] = await ethers.getSigners();
   const chainId: ChainId = await signer.getChainId();
 
   const IERC20 = new utils.Interface(ERC20_ABI);
-  const IRouterV2 = new utils.Interface(ROUTER_V2_ABI);
-  const IRouterV3 = new utils.Interface(ROUTER_V3_ABI);
 
-  const FORBITSPACEX_ADDRESS = FORBITSPACEX_ADDRESSES[chainId];
   const WETH_ADDRESS = WETH_ADDRESSES[chainId];
 
   const WETH: Contract = new Contract(WETH_ADDRESS, IERC20, signer);
   const UNI: Contract = new Contract(UNI_ADDRESS, IERC20, signer);
-  const forbitspaceX: Contract = new Contract(
+
+  const forbitspaceX: Contract = await ethers.getContractAt(
+    "forbitspaceX",
     FORBITSPACEX_ADDRESS,
-    FORBITSPACEX_ABI,
     signer
   );
 
@@ -62,121 +70,101 @@ async function main() {
     Math.round(Date.now() / 1000) + 60 * 20
   );
 
-  const [
-    data_WETH_UNI_Sushi,
-    data_WETH_UNI_UniV2,
-    data_WETH_UNI_UniV3,
-    data_UNI_WETH_Sushi,
-    data_UNI_WETH_UniV2,
-    data_UNI_WETH_UniV3,
-  ] = await Promise.all([
-    getSwapData(
-      {
-        amountIn,
-        amountOut,
-        deadline,
-        tokenInAddress: WETH_ADDRESS,
-        tokenOutAddress: UNI_ADDRESS,
-        fee: "3000",
-      },
-      FORBITSPACEX_ADDRESS,
-      SUSHI_ROUTER_ADDRESS,
-      IRouterV2,
-      IERC20
-    ),
-    getSwapData(
-      {
-        amountIn,
-        amountOut,
-        deadline,
-        tokenInAddress: WETH_ADDRESS,
-        tokenOutAddress: UNI_ADDRESS,
-        fee: "3000",
-      },
-      FORBITSPACEX_ADDRESS,
-      UNIV2_ROUTER_ADDRESS,
-      IRouterV2,
-      IERC20
-    ),
-    getSwapData(
-      {
-        amountIn,
-        amountOut,
-        deadline,
-        tokenInAddress: WETH_ADDRESS,
-        tokenOutAddress: UNI_ADDRESS,
-        fee: "3000",
-      },
-      FORBITSPACEX_ADDRESS,
-      UNIV3_ROUTER_ADDRESS,
-      IRouterV3,
-      IERC20
-    ),
-    getSwapData(
-      {
-        amountIn,
-        amountOut,
-        deadline,
-        tokenInAddress: UNI_ADDRESS,
-        tokenOutAddress: WETH_ADDRESS,
-        fee: "3000",
-      },
-      FORBITSPACEX_ADDRESS,
-      SUSHI_ROUTER_ADDRESS,
-      IRouterV2,
-      IERC20
-    ),
-    getSwapData(
-      {
-        amountIn,
-        amountOut,
-        deadline,
-        tokenInAddress: UNI_ADDRESS,
-        tokenOutAddress: WETH_ADDRESS,
-        fee: "3000",
-      },
-      FORBITSPACEX_ADDRESS,
-      UNIV2_ROUTER_ADDRESS,
-      IRouterV2,
-      IERC20
-    ),
-    getSwapData(
-      {
-        amountIn,
-        amountOut,
-        deadline,
-        tokenInAddress: UNI_ADDRESS,
-        tokenOutAddress: WETH_ADDRESS,
-        fee: "3000",
-      },
-      FORBITSPACEX_ADDRESS,
-      UNIV3_ROUTER_ADDRESS,
-      IRouterV3,
-      IERC20
-    ),
-  ]);
-
-  const aggregateParams_ET = [
-    constants.AddressZero,
+  const data_WETH_UNI_Sushi = getSwapData(
+    DexType.UNI_V2,
+    SUSHI_ROUTER_ADDRESS,
+    SUSHI_ROUTER_ADDRESS,
+    WETH_ADDRESS,
     UNI_ADDRESS,
-    amountTotal,
-    [...data_WETH_UNI_Sushi, ...data_WETH_UNI_UniV2, ...data_WETH_UNI_UniV3],
-    { value: amountTotal },
-  ];
+    amountIn,
+    amountOut,
+    deadline,
+    Fee.MEDIUM
+  );
 
-  const aggregateParams_TT = [
+  const data_WETH_UNI_UniV2 = getSwapData(
+    DexType.UNI_V2,
+    UNIV2_ROUTER_ADDRESS,
+    UNIV2_ROUTER_ADDRESS,
+    WETH_ADDRESS,
+    UNI_ADDRESS,
+    amountIn,
+    amountOut,
+    deadline,
+    Fee.MEDIUM
+  );
+
+  const data_WETH_UNI_UniV3 = getSwapData(
+    DexType.UNI_V3,
+    UNIV3_ROUTER_ADDRESS,
+    UNIV3_ROUTER_ADDRESS,
+    WETH_ADDRESS,
+    UNI_ADDRESS,
+    amountIn,
+    amountOut,
+    deadline,
+    Fee.MEDIUM
+  );
+
+  const data_UNI_WETH_Sushi = getSwapData(
+    DexType.UNI_V2,
+    SUSHI_ROUTER_ADDRESS,
+    SUSHI_ROUTER_ADDRESS,
     UNI_ADDRESS,
     WETH_ADDRESS,
-    amountTotal,
-    [...data_UNI_WETH_Sushi, ...data_UNI_WETH_UniV2, ...data_UNI_WETH_UniV3],
-  ];
+    amountIn,
+    amountOut,
+    deadline,
+    Fee.MEDIUM
+  );
 
-  const aggregateParams_TE = [
+  const data_UNI_WETH_UniV2 = getSwapData(
+    DexType.UNI_V2,
+    UNIV2_ROUTER_ADDRESS,
+    UNIV2_ROUTER_ADDRESS,
     UNI_ADDRESS,
-    constants.AddressZero,
-    amountTotal,
-    [...data_UNI_WETH_Sushi, ...data_UNI_WETH_UniV2, ...data_UNI_WETH_UniV3],
-  ];
+    WETH_ADDRESS,
+    amountIn,
+    amountOut,
+    deadline,
+    Fee.MEDIUM
+  );
+
+  const data_UNI_WETH_UniV3 = getSwapData(
+    DexType.UNI_V3,
+    UNIV3_ROUTER_ADDRESS,
+    UNIV3_ROUTER_ADDRESS,
+    UNI_ADDRESS,
+    WETH_ADDRESS,
+    amountIn,
+    amountOut,
+    deadline,
+    Fee.MEDIUM
+  );
+
+  const aggregateParams_ET: AggregateParam = {
+    tokenIn: ETH_ADDRESS,
+    tokenOut: UNI_ADDRESS,
+    amountInTotal: amountTotal,
+    recipient: signer.address,
+    sParams: [data_WETH_UNI_Sushi, data_WETH_UNI_UniV2, data_WETH_UNI_UniV3],
+  };
+
+  const aggregateParams_TT: AggregateParam = {
+    tokenIn: UNI_ADDRESS,
+    tokenOut: WETH_ADDRESS,
+    amountInTotal: amountTotal,
+    recipient: signer.address,
+    sParams: [data_UNI_WETH_Sushi, data_UNI_WETH_UniV2, data_UNI_WETH_UniV3],
+  };
+
+  const aggregateParams_TE: AggregateParam = {
+    tokenIn: UNI_ADDRESS,
+    tokenOut: ETH_ADDRESS,
+    amountInTotal: amountTotal,
+    recipient: signer.address,
+    sParams: [data_UNI_WETH_Sushi, data_UNI_WETH_UniV2, data_UNI_WETH_UniV3],
+  };
 
   const allowanceWETH: BigNumber = await WETH.allowance(
     signer.address,
@@ -219,20 +207,24 @@ async function main() {
     results_TT,
     results_TE,
   ] = await Promise.all([
-    forbitspaceX.estimateGas.aggregate(...aggregateParams_ET),
-    forbitspaceX.estimateGas.aggregate(...aggregateParams_TT),
-    forbitspaceX.estimateGas.aggregate(...aggregateParams_TE),
+    forbitspaceX.estimateGas.aggregate(aggregateParams_ET, {
+      value: amountTotal,
+    }),
+    forbitspaceX.estimateGas.aggregate(aggregateParams_TT),
+    forbitspaceX.estimateGas.aggregate(aggregateParams_TE),
 
-    forbitspaceX.callStatic.aggregate(...aggregateParams_ET),
-    forbitspaceX.callStatic.aggregate(...aggregateParams_TT),
-    forbitspaceX.callStatic.aggregate(...aggregateParams_TE),
+    forbitspaceX.callStatic.aggregate(aggregateParams_ET, {
+      value: amountTotal,
+    }),
+    forbitspaceX.callStatic.aggregate(aggregateParams_TT),
+    forbitspaceX.callStatic.aggregate(aggregateParams_TE),
   ]);
 
-  console.log("estimateGas_ET >>>", estimateGas_ET.toString());
+  // console.log("estimateGas_ET >>>", estimateGas_ET.toString());
   console.log("estimateGas_TT >>>", estimateGas_TT.toString());
   console.log("estimateGas_TE >>>", estimateGas_TE.toString());
 
-  console.log("results_ET >>>", results_ET);
+  // console.log("results_ET >>>", results_ET);
   console.log("results_TT >>>", results_TT);
   console.log("results_TE >>>", results_TE);
 
@@ -256,83 +248,90 @@ async function main() {
   // console.log("collectETH >>>", collectETH.toString());
 }
 
-async function getSwapData(
-  swapArgs: SwapArgs,
-  forbitspaceX_address: string,
-  routerAddress: string,
-  IRouter: utils.Interface,
-  IERC20: utils.Interface
-): Promise<SwapParam[]> {
-  var swapParam: SwapParam;
+function getSwapData(
+  type: DexType,
+  addressToApprove: string,
+  exchangeTarget: string,
+  tokenIn: string,
+  tokenOut: string,
+  amountIn: BigNumberish,
+  amountOut: BigNumberish,
+  deadline: BigNumberish,
+  fee: Fee
+): SwapParam {
+  var encode: string;
 
-  const tokenIn = new Contract(
-    swapArgs.tokenInAddress,
-    IERC20,
-    getDefaultProvider()
-  );
-  const allowance: BigNumber = await tokenIn.allowance(
-    forbitspaceX_address,
-    routerAddress
-  );
+  switch (type) {
+    case DexType.UNI_V2:
+      encode = new utils.Interface(ROUTER_V2_ABI).encodeFunctionData(
+        "swapExactTokensForTokens",
+        [
+          amountIn,
+          amountOut,
+          [tokenIn, tokenOut],
+          FORBITSPACEX_ADDRESS,
+          deadline,
+        ]
+      );
+      break;
+    case DexType.UNI_V3:
+      encode = new utils.Interface(ROUTER_V3_ABI).encodeFunctionData(
+        "exactInputSingle",
+        [
+          {
+            tokenIn: tokenIn,
+            tokenOut: tokenOut,
+            fee: fee,
+            recipient: FORBITSPACEX_ADDRESS,
+            deadline: deadline,
+            amountIn: amountIn,
+            amountOutMinimum: amountOut,
+            sqrtPriceLimitX96: "0x00",
+          },
+        ]
+      );
+      break;
+    default:
+      encode = "";
+      break;
+  }
 
-  const approveParam: SwapParam = {
-    target: swapArgs.tokenInAddress,
-    swapData: IERC20.encodeFunctionData("approve", [
-      routerAddress,
-      swapArgs.amountIn,
-    ]),
+  return {
+    addressToApprove: addressToApprove,
+    exchangeTarget: exchangeTarget,
+    tokenIn: tokenIn, // tokenFrom
+    tokenOut: tokenOut, // tokenTo
+    swapData: encode,
   };
-
-  swapParam = {
-    target: routerAddress,
-    swapData: getSwapEncode(forbitspaceX_address, IRouter, swapArgs) || "",
-  };
-
-  return allowance.lt(swapArgs.amountIn)
-    ? [approveParam, swapParam]
-    : [swapParam];
 }
 
-function getSwapEncode(
-  forbitspaceX_address: string,
-  IRouter: utils.Interface,
-  swapArgs: SwapArgs
-): string | undefined {
-  try {
-    return IRouter.encodeFunctionData("swapExactTokensForTokens", [
-      swapArgs.amountIn.toHexString(),
-      swapArgs.amountOut.toHexString(),
-      [swapArgs.tokenInAddress, swapArgs.tokenOutAddress],
-      forbitspaceX_address,
-      swapArgs.deadline.toHexString(),
-    ]);
-  } catch (error) {}
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
 
-  try {
-    return IRouter.encodeFunctionData("exactInputSingle", [
-      {
-        tokenIn: swapArgs.tokenInAddress,
-        tokenOut: swapArgs.tokenOutAddress,
-        fee: swapArgs.fee,
-        recipient: forbitspaceX_address,
-        deadline: swapArgs.deadline.toHexString(),
-        amountIn: swapArgs.amountIn.toHexString(),
-        amountOutMinimum: swapArgs.amountOut.toHexString(),
-        sqrtPriceLimitX96: "0x00",
-      },
-    ]);
-  } catch (error) {}
+async function test() {
+  const [signer] = await ethers.getSigners();
+  const chainId: ChainId = await signer.getChainId();
+  const WETH_ADDRESS = WETH_ADDRESSES[chainId];
 
-  return undefined;
+  const forbitspaceX = await ethers.getContractAt(
+    "forbitspaceX",
+    FORBITSPACEX_ADDRESS,
+    signer
+  );
+
+  const feeTo = await forbitspaceX.feeTo();
+  const version = await forbitspaceX.version();
+  const eth = await forbitspaceX.ETH();
+  const weth = await forbitspaceX.WETH();
+
+  console.log({ version, feeTo, eth, weth });
 }
 
-let amountTotalWithFee: BigNumber = utils
-  .parseUnits("0.11", 18)
-  .mul(9995)
-  .div(10000);
-console.log("amountTotalWithFee >>>", amountTotalWithFee.toString());
-
-// main()
+// test()
 //   .then(() => process.exit(0))
 //   .catch((error) => {
 //     console.error(error);

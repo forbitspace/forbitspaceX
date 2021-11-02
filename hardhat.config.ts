@@ -25,7 +25,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 });
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "hardhat",
+  defaultNetwork: "rinkeby",
   networks: {
     hardhat: {},
     localhost: {
@@ -67,15 +67,6 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.8",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 1000000,
-          },
-        },
-      },
-      {
         version: "0.8.2",
         settings: {
           optimizer: {
@@ -85,7 +76,7 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        version: "0.8.0",
+        version: "0.8.8",
         settings: {
           optimizer: {
             enabled: true,
@@ -101,7 +92,8 @@ const config: HardhatUserConfig = {
     apiKey: API_KEY,
   },
   paths: {
-    sources: "./contracts-upgradeable",
+    sources: "./contracts-uups",
+    // sources: "./contracts-transparent",
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",

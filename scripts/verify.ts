@@ -10,14 +10,14 @@ async function main() {
   const [signer] = await ethers.getSigners();
   const chainId: ChainId = await signer.getChainId();
 
-  const FORBITSPACEX_ADDRESS = "0xb3fef4b71a4edb6f1bd51bf9417876042b936dd6";
+  const PROXY_ADDRESS = "0x06B526413B5F42acc6005c8F236384B38CAC93ec";
+  const IMPLEMENT_ADDRESS = "0xaba9f41133f0a14d57fb64c902ab0f0d6ae23fbc";
   const WETH_ADDRESS = WETH_ADDRESSES[chainId];
 
-  console.log({ chainId, WETH_ADDRESS, FORBITSPACEX_ADDRESS });
+  console.log({ chainId, WETH_ADDRESS, IMPLEMENT_ADDRESS });
 
   await run("verify:verify", {
-    address: FORBITSPACEX_ADDRESS,
-    constructorArguments: [WETH_ADDRESS],
+    address: IMPLEMENT_ADDRESS,
   });
 }
 
