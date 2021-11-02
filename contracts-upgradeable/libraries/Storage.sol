@@ -34,19 +34,15 @@ abstract contract Storage is IStorage, OwnableUpgradeable {
 		_WETH_ = _WETH;
 	}
 
+	function feeTo() public view override returns (address) {
+		return _feeTo_;
+	}
+
 	function ETH() public view override returns (address) {
 		return _ETH_;
 	}
 
 	function WETH() public view override returns (address) {
 		return _WETH_;
-	}
-
-	function feeTo() public view override returns (address) {
-		return _feeTo_;
-	}
-
-	function version() public pure virtual override returns (string memory) {
-		return "2.0.0";
 	}
 }

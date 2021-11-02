@@ -29,6 +29,8 @@ interface IforbitspaceX is IPayment {
 		address indexed recipient
 	);
 
+	function version() external pure returns (string memory);
+
 	function aggregate(AggregateParam calldata aParam)
 		external
 		payable

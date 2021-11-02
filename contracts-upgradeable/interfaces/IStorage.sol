@@ -5,13 +5,11 @@ pragma solidity ^0.8.8;
 interface IStorage {
 	event FeeToTransfered(address indexed oldFeeTo, address indexed newFeeTo);
 
-	function version() external pure returns (string memory);
+	function setFeeTo(address newFeeTo) external;
+
+	function feeTo() external view returns (address);
 
 	function ETH() external view returns (address);
 
 	function WETH() external view returns (address);
-
-	function feeTo() external view returns (address);
-
-	function setFeeTo(address newFeeTo) external;
 }

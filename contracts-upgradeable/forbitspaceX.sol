@@ -23,6 +23,10 @@ contract forbitspaceX is IforbitspaceX, Payment {
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() initializer {}
 
+	function version() public pure virtual override returns (string memory) {
+		return "2.0.0";
+	}
+
 	function aggregate(AggregateParam calldata aParam)
 		public
 		payable
