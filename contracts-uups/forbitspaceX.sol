@@ -13,12 +13,12 @@ contract forbitspaceX is IforbitspaceX, Payment {
 	// Z: zero-address
 	// I_P: invalid path
 	// I_V: invalid value
-	// I_A_T_A: incorrect actual total amounts
-	// N_E_T: not enough tokens
+	// I_A_T_A: invalid actual total amounts
+	// I_A_A: invalid actual amounts
 	// I_T_I: invalid token in
 	// I_T_O: invalid token out
+	// N_E_T: not enough tokens
 	// L_C_F: low-level call failed
-	// I_A_A: invalid actual amounts
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() initializer {}
@@ -33,14 +33,13 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		address recipient = aParam.recipient == address(0) ? _msgSender() : aParam.recipient;
 		uint amountInTotal = tokenIn == ETH() ? msg.value : aParam.amountInTotal;
 
-		require(!(tokenIn == tokenOut), "I_P");
-		require(!(tokenIn == ETH() && tokenOut == WETH()), "I_P");
-		require(!(tokenIn == WETH() && tokenOut == ETH()), "I_P");
-
 		if (tokenIn != ETH()) {
 			require(msg.value == 0, "I_V");
 		}
 		require(amountInTotal > 0, "I_V");
+		require(!(tokenIn == tokenOut), "I_P");
+		require(!(tokenIn == ETH() && tokenOut == WETH()), "I_P");
+		require(!(tokenIn == WETH() && tokenOut == ETH()), "I_P");
 
 		// receive tokens
 		pay(address(this), tokenIn, amountInTotal);
@@ -80,11 +79,8 @@ contract forbitspaceX is IforbitspaceX, Payment {
 			address tokenOut = params[i].tokenOut;
 
 			require(addressToApprove != address(0) && exchangeTarget != address(0), "Z");
-
 			require(tokenIn != address(0) && tokenIn != ETH(), "I_T_I");
-
 			require(tokenOut != address(0) && tokenOut != ETH(), "I_T_O");
-
 			require(tokenIn != tokenOut, "I_P");
 
 			approve(addressToApprove, tokenIn, type(uint).max);
