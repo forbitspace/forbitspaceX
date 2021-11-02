@@ -4,34 +4,11 @@ pragma solidity ^0.8.8;
 pragma abicoder v2;
 
 import { Payment, SafeMathUpgradeable, AddressUpgradeable } from "./libraries/Payment.sol";
+import { IforbitspaceX } from "./interfaces/IforbitspaceX.sol";
 
-contract forbitspaceX is Payment {
+contract forbitspaceX is IforbitspaceX, Payment {
 	using SafeMathUpgradeable for uint;
 	using AddressUpgradeable for address;
-
-	struct AggregateParam {
-		address tokenIn;
-		address tokenOut;
-		uint amountInTotal;
-		address recipient;
-		SwapParam[] sParams;
-	}
-
-	struct SwapParam {
-		address addressToApprove;
-		address exchangeTarget;
-		address tokenIn; // tokenFrom
-		address tokenOut; // tokenTo
-		bytes swapData;
-	}
-
-	event AggregateSwapped(
-		uint amountIn,
-		uint amountOut,
-		address indexed tokenIn,
-		address indexed tokenOut,
-		address indexed recipient
-	);
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() initializer {}
@@ -41,18 +18,20 @@ contract forbitspaceX is Payment {
 		payable
 		returns (uint amountInActual, uint amountOutActual)
 	{
-		address tokenIn = aParam.tokenIn != address(0) ? aParam.tokenIn : ETH();
-		address tokenOut = aParam.tokenOut != address(0) ? aParam.tokenOut : ETH();
-		uint amountInTotal = tokenIn != ETH() ? aParam.amountInTotal : msg.value;
-		address recipient = aParam.recipient != address(0) ? aParam.recipient : _msgSender();
+		address tokenIn = aParam.tokenIn == address(0) ? ETH() : aParam.tokenIn;
+		address tokenOut = aParam.tokenOut == address(0) ? ETH() : aParam.tokenOut;
+		address recipient = aParam.recipient == address(0) ? _msgSender() : aParam.recipient;
+		uint amountInTotal = tokenIn == ETH() ? msg.value : aParam.amountInTotal;
 
 		// I_P: invalid path
-		require(tokenIn != tokenOut, "I_P");
+		require(!(tokenIn == tokenOut), "I_P");
 		require(!(tokenIn == ETH() && tokenOut == WETH()), "I_P");
 		require(!(tokenIn == WETH() && tokenOut == ETH()), "I_P");
 
 		// I_V: invalid value
-		require(tokenIn != ETH() && msg.value == 0, "I_V");
+		if (tokenIn != ETH()) {
+			require(msg.value == 0, "I_V");
+		}
 		require(amountInTotal > 0, "I_V");
 
 		// receive tokens
@@ -94,9 +73,16 @@ contract forbitspaceX is Payment {
 			address tokenIn = params[i].tokenIn;
 			address tokenOut = params[i].tokenOut;
 
-			require(addressToApprove != address(0) && exchangeTarget != address(0), "Z"); // zero-address
-			require(tokenIn != address(0) && tokenIn != ETH(), "I_T_I"); // invalid token in
-			require(tokenOut != address(0) && tokenOut != ETH(), "I_T_O"); // invalid token out
+			// Z: zero-address
+			require(addressToApprove != address(0) && exchangeTarget != address(0), "Z");
+
+			// I_T_I: invalid token in
+			require(tokenIn != address(0) && tokenIn != ETH(), "I_T_I");
+
+			// I_T_O: invalid token out
+			require(tokenOut != address(0) && tokenOut != ETH(), "I_T_O");
+
+			// I_P: invalid path
 			require(tokenIn != tokenOut, "I_P");
 
 			approve(addressToApprove, tokenIn, type(uint).max);
@@ -104,12 +90,14 @@ contract forbitspaceX is Payment {
 			uint amountInActual = balanceOf(tokenIn);
 			uint amountOutActual = balanceOf(tokenOut);
 
-			exchangeTarget.functionCall(params[i].swapData, "L_C_F"); // low-level call failed
+			// L_C_F: low-level call failed
+			exchangeTarget.functionCall(params[i].swapData, "L_C_F");
 
 			amountInActual = amountInActual.sub(balanceOf(tokenIn));
 			amountOutActual = balanceOf(tokenOut).sub(amountOutActual);
 
-			require((amountInActual > 0) && (amountOutActual > 0), "I_A_A"); // invalid actual amounts
+			// I_A_A: invalid actual amounts
+			require((amountInActual > 0) && (amountOutActual > 0), "I_A_A");
 		}
 	}
 }

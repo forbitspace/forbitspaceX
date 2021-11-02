@@ -10,12 +10,11 @@ import {
 import { SafeMathUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import { IWETH } from "../interfaces/IWETH.sol";
 import { StorageUpgradeable } from "./StorageUpgradeable.sol";
+import { IPayment } from "../interfaces/IPayment.sol";
 
-abstract contract Payment is StorageUpgradeable {
+abstract contract Payment is IPayment, StorageUpgradeable {
 	using SafeMathUpgradeable for uint;
 	using SafeERC20Upgradeable for IERC20Upgradeable;
-
-	event FeeCollected(address token, uint amount);
 
 	receive() external payable {}
 
@@ -31,7 +30,7 @@ abstract contract Payment is StorageUpgradeable {
 	}
 
 	function balanceOf(address token) internal view returns (uint bal) {
-		bal = IERC20Upgradeable(token != ETH() ? token : WETH()).balanceOf(address(this));
+		bal = IERC20Upgradeable(token == ETH() ? WETH() : token).balanceOf(address(this));
 	}
 
 	function pay(
@@ -48,7 +47,9 @@ abstract contract Payment is StorageUpgradeable {
 				}
 			} else {
 				if (token == ETH()) {
-					if (balanceOf(WETH()) > 0) IWETH(WETH()).withdraw(balanceOf(WETH()));
+					if (balanceOf(WETH()) > 0) {
+						IWETH(WETH()).withdraw(balanceOf(WETH()));
+					}
 					AddressUpgradeable.sendValue(payable(recipient), amount);
 				} else {
 					IERC20Upgradeable(token).safeTransfer(recipient, amount);
@@ -57,7 +58,7 @@ abstract contract Payment is StorageUpgradeable {
 		}
 	}
 
-	function collectETH() public returns (uint amount) {
+	function collectETH() public override returns (uint amount) {
 		if (balanceOf(WETH()) > 0) {
 			IWETH(WETH()).withdraw(balanceOf(WETH()));
 		}
@@ -67,7 +68,7 @@ abstract contract Payment is StorageUpgradeable {
 		}
 	}
 
-	function collectTokens(address token) public returns (uint amount) {
+	function collectTokens(address token) public override returns (uint amount) {
 		if (token == ETH()) {
 			amount = collectETH();
 		} else if ((amount = balanceOf(token)) > 0) {

@@ -3,52 +3,50 @@
 pragma solidity ^0.8.8;
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { IStorageUpgradeable } from "../interfaces/IStorageUpgradeable.sol";
 
-abstract contract StorageUpgradeable is OwnableUpgradeable, UUPSUpgradeable {
-	address private _feeTo;
-	address private _WETH;
-	address private _ETH;
+abstract contract StorageUpgradeable is IStorageUpgradeable, OwnableUpgradeable {
+	address private _feeTo_;
+	address private _WETH_;
+	address private _ETH_;
 
-	event FeeToTransfered(address from, address to);
-
-	function initialize(address newWETH) public initializer {
+	function initialize(address _WETH, address _feeTo) public initializer {
 		__Ownable_init();
-		setFeeTo(owner());
-		setWETH(newWETH);
+		setFeeTo(_feeTo);
+		setWETH(_WETH);
 		setETH(address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
 	}
 
-	function _authorizeUpgrade(address newImplementation) internal virtual override {}
-
-	function version() public pure virtual returns (string memory) {
-		return "1.0.0";
+	function setETH(address _ETH) private initializer {
+		require(_ETH != address(0), "Z"); // zero-address
+		_ETH_ = _ETH;
 	}
 
-	function ETH() public view returns (address) {
-		return _ETH;
+	function setWETH(address _WETH) private initializer {
+		require(_WETH != address(0), "Z"); // zero-address
+		_WETH_ = _WETH;
 	}
 
-	function WETH() public view returns (address) {
-		return _WETH;
-	}
-
-	function feeTo() public view returns (address) {
-		return _feeTo;
-	}
-
-	function setETH(address newETH) private {
-		_ETH = newETH;
-	}
-
-	function setWETH(address newWETH) private {
-		_WETH = newWETH;
-	}
-
-	function setFeeTo(address newFeeTo) public onlyOwner {
-		require(newFeeTo != address(0), "Z"); // zero-address
-		address oldFeeTo = _feeTo;
-		_feeTo = newFeeTo;
+	function setFeeTo(address _feeTo) public override onlyOwner {
+		address newFeeTo = _feeTo == address(0) ? owner() : _feeTo;
+		address oldFeeTo = _feeTo_;
+		_feeTo_ = newFeeTo;
 		emit FeeToTransfered(oldFeeTo, newFeeTo);
+	}
+
+	function ETH() public view override returns (address) {
+		return _ETH_;
+	}
+
+	function WETH() public view override returns (address) {
+		return _WETH_;
+	}
+
+	function feeTo() public view override returns (address) {
+		return _feeTo_;
+	}
+
+	function version() public pure virtual override returns (string memory) {
+		return "1.0.1";
 	}
 }

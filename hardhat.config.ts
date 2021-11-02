@@ -92,7 +92,8 @@ const config: HardhatUserConfig = {
     apiKey: API_KEY,
   },
   paths: {
-    sources: "./contracts-uups",
+    sources: "./contracts-merged",
+    // sources: "./contracts-uups",
     // sources: "./contracts-transparent",
     tests: "./test",
     cache: "./cache",

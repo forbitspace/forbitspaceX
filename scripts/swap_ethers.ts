@@ -43,7 +43,8 @@ type SwapParam = {
   swapData: string;
 };
 
-const FORBITSPACEX_ADDRESS = "0x06B526413B5F42acc6005c8F236384B38CAC93ec";
+// const FORBITSPACEX_ADDRESS = "0x06B526413B5F42acc6005c8F236384B38CAC93ec";
+const FORBITSPACEX_ADDRESS = "0xee2d18d34991c24dcb0eaf49b04922a5d58c02ef";
 
 async function main() {
   const [signer] = await ethers.getSigners();
@@ -220,11 +221,11 @@ async function main() {
     forbitspaceX.callStatic.aggregate(aggregateParams_TE),
   ]);
 
-  // console.log("estimateGas_ET >>>", estimateGas_ET.toString());
+  console.log("estimateGas_ET >>>", estimateGas_ET.toString());
   console.log("estimateGas_TT >>>", estimateGas_TT.toString());
   console.log("estimateGas_TE >>>", estimateGas_TE.toString());
 
-  // console.log("results_ET >>>", results_ET);
+  console.log("results_ET >>>", results_ET);
   console.log("results_TT >>>", results_TT);
   console.log("results_TE >>>", results_TE);
 
@@ -311,29 +312,3 @@ main()
     console.error(error);
     process.exit(1);
   });
-
-async function test() {
-  const [signer] = await ethers.getSigners();
-  const chainId: ChainId = await signer.getChainId();
-  const WETH_ADDRESS = WETH_ADDRESSES[chainId];
-
-  const forbitspaceX = await ethers.getContractAt(
-    "forbitspaceX",
-    FORBITSPACEX_ADDRESS,
-    signer
-  );
-
-  const feeTo = await forbitspaceX.feeTo();
-  const version = await forbitspaceX.version();
-  const eth = await forbitspaceX.ETH();
-  const weth = await forbitspaceX.WETH();
-
-  console.log({ version, feeTo, eth, weth });
-}
-
-// test()
-//   .then(() => process.exit(0))
-//   .catch((error) => {
-//     console.error(error);
-//     process.exit(1);
-//   });
