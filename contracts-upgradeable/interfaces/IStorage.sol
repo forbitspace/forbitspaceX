@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.8;
 
-interface IStorageUpgradeable {
+interface IStorage {
 	event FeeToTransfered(address indexed oldFeeTo, address indexed newFeeTo);
 
 	function version() external pure returns (string memory);

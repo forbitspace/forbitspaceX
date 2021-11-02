@@ -1431,7 +1431,7 @@ interface IforbitspaceX is IPayment {
 }
 
 //
-contract forbitspaceX is IforbitspaceX, Payment {
+contract forbitspaceX_UUPS is IforbitspaceX, Payment {
 	using SafeMath for uint;
 	using Address for address;
 

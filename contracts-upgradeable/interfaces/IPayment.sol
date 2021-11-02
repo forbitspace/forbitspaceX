@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.8;
 
-import { IStorageUpgradeable } from "./IStorageUpgradeable.sol";
+import { IStorage } from "./IStorage.sol";
 
-interface IPayment is IStorageUpgradeable {
-	event FeeCollected(address indexed token, uint amount);
+interface IPayment is IStorage {
+	event FeeCollected(address indexed feeTo, address indexed token, uint amount);
 
 	function collectETH() external returns (uint amount);
 

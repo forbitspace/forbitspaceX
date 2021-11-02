@@ -7,13 +7,14 @@ async function main() {
   await run("compile");
 
   const chainId: ChainId = await getChainId(network.provider);
-  console.log("chainId >>>", chainId);
 
   console.log("chainId >>>", chainId);
 
   const WETH_ADDRESS: string = WETH_ADDRESSES[chainId];
 
-  const forbitspaceX_factory = await ethers.getContractFactory("forbitspaceX");
+  const forbitspaceX_factory = await ethers.getContractFactory(
+    "forbitspaceX_UUPS"
+  );
 
   var NEW_OWNER_ADDRESS: string = "";
 
@@ -32,9 +33,10 @@ async function main() {
 
   console.log(`UUPS deployed to >>>`, proxy.address);
 }
-
 main()
-  .then(() => process.exit(0))
+  .then(() => {
+    process.exit(0);
+  })
   .catch((error) => {
     console.error(error);
     process.exit(1);

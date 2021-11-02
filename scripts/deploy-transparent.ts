@@ -27,9 +27,10 @@ async function main() {
 
   console.log("Proxy deployed to >>>", proxy.address);
 }
-
 main()
-  .then(() => process.exit(0))
+  .then(() => {
+    process.exit(0);
+  })
   .catch((error) => {
     console.error(error);
     process.exit(1);

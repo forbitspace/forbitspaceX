@@ -9,7 +9,8 @@ import {
 async function main() {
   const provider = network.provider;
 
-  const PROXY_ADDRESS = "0xeE2D18D34991c24dcb0EAF49B04922a5D58c02Ef";
+  // const PROXY_ADDRESS = "0xcF1dCaFFf703Fa0219AB779221A14aa5C39c945f";
+  const PROXY_ADDRESS = "0x71fd6e25C1f39263b334eE188DC0d4C4d36E4779";
 
   console.log();
 
@@ -29,10 +30,11 @@ async function main() {
     chainId,
   });
 }
-
 main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error(err);
     process.exit(1);
   });

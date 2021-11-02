@@ -44,14 +44,14 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		// receive tokens
 		pay(address(this), tokenIn, amountInTotal);
 
-		// amountAcutual before
+		// amountActual before
 		amountInActual = balanceOf(tokenIn);
 		amountOutActual = balanceOf(tokenOut);
 
 		// call swap on multi dexs
 		performSwap(aParam.sParams);
 
-		// amountAcutual after
+		// amountActual after
 		amountInActual = amountInActual.sub(balanceOf(tokenIn));
 		amountOutActual = balanceOf(tokenOut).sub(amountOutActual);
 
@@ -85,11 +85,13 @@ contract forbitspaceX is IforbitspaceX, Payment {
 
 			approve(addressToApprove, tokenIn, type(uint).max);
 
+			// amountActual before
 			uint amountInActual = balanceOf(tokenIn);
 			uint amountOutActual = balanceOf(tokenOut);
 
 			exchangeTarget.functionCall(params[i].swapData, "L_C_F");
 
+			// amountActual after
 			amountInActual = amountInActual.sub(balanceOf(tokenIn));
 			amountOutActual = balanceOf(tokenOut).sub(amountOutActual);
 

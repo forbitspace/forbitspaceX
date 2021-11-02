@@ -3,15 +3,12 @@
 pragma solidity ^0.8.8;
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { IStorageUpgradeable } from "../interfaces/IStorageUpgradeable.sol";
+import { IStorage } from "../interfaces/IStorage.sol";
 
-abstract contract StorageUpgradeable is IStorageUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
+abstract contract Storage is IStorage, OwnableUpgradeable {
 	address private _feeTo_;
 	address private _WETH_;
 	address private _ETH_;
-
-	function _authorizeUpgrade(address newImplementation) internal virtual override {}
 
 	function initialize(address _WETH, address _feeTo) public initializer {
 		__Ownable_init();

@@ -43,8 +43,8 @@ type SwapParam = {
   swapData: string;
 };
 
-// const FORBITSPACEX_ADDRESS = "0x06B526413B5F42acc6005c8F236384B38CAC93ec";
-const FORBITSPACEX_ADDRESS = "0xee2d18d34991c24dcb0eaf49b04922a5d58c02ef";
+// const FORBITSPACEX_ADDRESS = "0xcF1dCaFFf703Fa0219AB779221A14aa5C39c945f";
+const FORBITSPACEX_ADDRESS = "0x71fd6e25C1f39263b334eE188DC0d4C4d36E4779";
 
 async function main() {
   const [signer] = await ethers.getSigners();
@@ -65,7 +65,7 @@ async function main() {
 
   // shoud use oracle price
   let amountTotal: BigNumber = utils.parseUnits("0.15");
-  let amountIn: BigNumber = utils.parseUnits("0.049975");
+  let amountIn: BigNumber = utils.parseUnits("0.05");
   let amountOut: BigNumber = utils.parseUnits("0.0");
   let deadline: BigNumber = BigNumber.from(
     Math.round(Date.now() / 1000) + 60 * 20
@@ -229,17 +229,18 @@ async function main() {
   console.log("results_TT >>>", results_TT);
   console.log("results_TE >>>", results_TE);
 
-  // const tx_ET = await forbitspaceX.aggregate(...aggregateParams_ET);
+  // const tx_ET = await forbitspaceX.aggregate(aggregateParams_ET, {
+  //   value: amountTotal,
+  // });
   // await tx_ET.wait();
   // console.log(tx_ET);
 
-  // const tx_TT = await forbitspaceX.aggregate(...aggregateParams_TT);
+  // const tx_TT = await forbitspaceX.aggregate(aggregateParams_TT);
   // await tx_TT.wait();
   // console.log(tx_TT);
 
-  // const tx_TE = await forbitspaceX.aggregate(...aggregateParams_TE);
+  // const tx_TE = await forbitspaceX.aggregate(aggregateParams_TE);
   // await tx_TE.wait();
-  // console.log(tx_TE);
 
   // const collectTokens = await forbitspaceX.callStatic.collectTokens(
   //   WETH_ADDRESS
@@ -307,7 +308,9 @@ function getSwapData(
 }
 
 main()
-  .then(() => process.exit(0))
+  .then(() => {
+    process.exit(0);
+  })
   .catch((error) => {
     console.error(error);
     process.exit(1);
