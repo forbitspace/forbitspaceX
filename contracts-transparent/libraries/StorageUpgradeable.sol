@@ -18,12 +18,12 @@ abstract contract StorageUpgradeable is IStorageUpgradeable, OwnableUpgradeable 
 	}
 
 	function setETH(address _ETH) private initializer {
-		require(_ETH != address(0), "Z"); // zero-address
+		require(_ETH != address(0), "Z");
 		_ETH_ = _ETH;
 	}
 
 	function setWETH(address _WETH) private initializer {
-		require(_WETH != address(0), "Z"); // zero-address
+		require(_WETH != address(0), "Z");
 		_WETH_ = _WETH;
 	}
 
@@ -47,6 +47,6 @@ abstract contract StorageUpgradeable is IStorageUpgradeable, OwnableUpgradeable 
 	}
 
 	function version() public pure virtual override returns (string memory) {
-		return "1.0.1";
+		return "2.0.0";
 	}
 }
