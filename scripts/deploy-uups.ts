@@ -25,9 +25,7 @@ async function main() {
   const proxy = await upgrades.deployProxy(
     forbitspaceX_factory,
     [WETH_ADDRESS, NEW_OWNER_ADDRESS],
-    {
-      kind: "uups",
-    }
+    { kind: "uups" }
   );
   await proxy.deployed();
 
