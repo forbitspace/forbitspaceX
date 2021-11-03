@@ -1,14 +1,14 @@
 import { ethers } from "hardhat";
 
-// const FORBITSPACEX_ADDRESS = "0xcF1dCaFFf703Fa0219AB779221A14aa5C39c945f";
-const FORBITSPACEX_ADDRESS = "0x71fd6e25C1f39263b334eE188DC0d4C4d36E4779";
+// const PROXY_ADDRESS = "0x6F50E98e8cEeCad78Db329Dd5c912deC0B78C098"; // Transparent
+const PROXY_ADDRESS = "0xF7cda6A99e7c4ebF63C89FAebdCF5f864618f68f"; // UUPS
 
 async function main() {
   const [signer] = await ethers.getSigners();
 
   const forbitspaceX = await ethers.getContractAt(
     "forbitspaceX",
-    FORBITSPACEX_ADDRESS,
+    PROXY_ADDRESS,
     signer
   );
   const [owner, feeTo, ETH, WETH, version]: string[] = await Promise.all([

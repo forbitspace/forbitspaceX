@@ -43,8 +43,8 @@ type SwapParam = {
   swapData: string;
 };
 
-// const FORBITSPACEX_ADDRESS = "0xcF1dCaFFf703Fa0219AB779221A14aa5C39c945f";
-const FORBITSPACEX_ADDRESS = "0x71fd6e25C1f39263b334eE188DC0d4C4d36E4779";
+// const PROXY_ADDRESS = "0x6F50E98e8cEeCad78Db329Dd5c912deC0B78C098"; // Transparent
+const PROXY_ADDRESS = "0xF7cda6A99e7c4ebF63C89FAebdCF5f864618f68f"; // UUPS
 
 async function main() {
   const [signer] = await ethers.getSigners();
@@ -59,7 +59,7 @@ async function main() {
 
   const forbitspaceX: Contract = await ethers.getContractAt(
     "forbitspaceX",
-    FORBITSPACEX_ADDRESS,
+    PROXY_ADDRESS,
     signer
   );
 
@@ -169,30 +169,24 @@ async function main() {
 
   const allowanceWETH: BigNumber = await WETH.allowance(
     signer.address,
-    FORBITSPACEX_ADDRESS
+    PROXY_ADDRESS
   );
 
   const allowanceUNI: BigNumber = await UNI.allowance(
     signer.address,
-    FORBITSPACEX_ADDRESS
+    PROXY_ADDRESS
   );
 
   if (allowanceWETH.lt(amountTotal)) {
     console.log("forbitspaceX WETH approving...");
-    const txApprove = await WETH.approve(
-      FORBITSPACEX_ADDRESS,
-      constants.MaxUint256
-    );
+    const txApprove = await WETH.approve(PROXY_ADDRESS, constants.MaxUint256);
     await txApprove.wait();
     console.log("WETH Approved >>>", allowanceWETH.toHexString());
   }
 
   if (allowanceUNI.lt(amountTotal)) {
     console.log("forbitspaceX UNI approving...");
-    const txApprove = await UNI.approve(
-      FORBITSPACEX_ADDRESS,
-      constants.MaxUint256
-    );
+    const txApprove = await UNI.approve(PROXY_ADDRESS, constants.MaxUint256);
     await txApprove.wait();
     console.log("UNI Approved >>>", allowanceUNI.toHexString());
   }
@@ -241,6 +235,7 @@ async function main() {
 
   // const tx_TE = await forbitspaceX.aggregate(aggregateParams_TE);
   // await tx_TE.wait();
+  // console.log(tx_TE);
 
   // const collectTokens = await forbitspaceX.callStatic.collectTokens(
   //   WETH_ADDRESS
@@ -267,13 +262,7 @@ function getSwapData(
     case DexType.UNI_V2:
       encode = new utils.Interface(ROUTER_V2_ABI).encodeFunctionData(
         "swapExactTokensForTokens",
-        [
-          amountIn,
-          amountOut,
-          [tokenIn, tokenOut],
-          FORBITSPACEX_ADDRESS,
-          deadline,
-        ]
+        [amountIn, amountOut, [tokenIn, tokenOut], PROXY_ADDRESS, deadline]
       );
       break;
     case DexType.UNI_V3:
@@ -284,7 +273,7 @@ function getSwapData(
             tokenIn: tokenIn,
             tokenOut: tokenOut,
             fee: fee,
-            recipient: FORBITSPACEX_ADDRESS,
+            recipient: PROXY_ADDRESS,
             deadline: deadline,
             amountIn: amountIn,
             amountOutMinimum: amountOut,

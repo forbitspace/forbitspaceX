@@ -31,7 +31,7 @@ async function main() {
   );
   await proxy.deployed();
 
-  console.log(`UUPS deployed to >>>`, proxy.address);
+  console.log("Proxy deployed to >>>", proxy.address);
 }
 main()
   .then(() => {

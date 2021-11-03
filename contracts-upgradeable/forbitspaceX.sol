@@ -3,10 +3,10 @@
 pragma solidity ^0.8.8;
 pragma abicoder v2;
 
-import { Payment, SafeMath, Address } from "./libraries/Payment.sol";
 import { IforbitspaceX } from "./interfaces/IforbitspaceX.sol";
+import { Payment, SafeMath, Address } from "./libraries/Payment.sol";
 
-contract forbitspaceX is IforbitspaceX, Payment {
+abstract contract forbitspaceX is IforbitspaceX, Payment {
 	using SafeMath for uint;
 	using Address for address;
 
@@ -22,10 +22,6 @@ contract forbitspaceX is IforbitspaceX, Payment {
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() initializer {}
-
-	function version() public pure virtual override returns (string memory) {
-		return "2.0.0";
-	}
 
 	function aggregate(AggregateParam calldata aParam)
 		public
@@ -72,7 +68,7 @@ contract forbitspaceX is IforbitspaceX, Payment {
 		collectTokens(tokenIn);
 		collectTokens(tokenOut);
 
-		emit AggregateSwapped(amountInActual, amountOutActual, tokenIn, tokenOut, recipient);
+		emit AggregateSwapped(recipient, tokenIn, tokenOut, amountInActual, amountOutActual);
 	}
 
 	function performSwap(SwapParam[] calldata params) private {

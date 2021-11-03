@@ -8,4 +8,8 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 
 contract forbitspaceX_UUPS is forbitspaceX, UUPSUpgradeable {
 	function _authorizeUpgrade(address newImplementation) internal virtual override {}
+
+	function version() public pure virtual override returns (string memory) {
+		return "2.0.0";
+	}
 }

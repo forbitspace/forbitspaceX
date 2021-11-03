@@ -4,15 +4,15 @@
   "main": "hardhat.config.ts",
   "license": "MIT",
   "scripts": {
-    "clean": "hardhat clean",
     "prettier": "prettier --write .",
-    "build-contracts": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-upgradeable/*.sol ./contracts-merged",
-    "precompile:off": "npm run build-contracts",
+    "clean": "hardhat clean && rm -rf contracts",
     "compile": "hardhat compile",
-    "update": "hardhat run scripts/upgrade.ts --network rinkeby",
+    "build:t": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-upgradeable/forbitspaceX_Transparent.sol ./contracts",
+    "build:u": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-upgradeable/forbitspaceX_UUPS.sol ./contracts",
     "deploy:t": "hardhat run scripts/deploy-transparent.ts --network rinkeby",
     "deploy:u": "hardhat run scripts/deploy-uups.ts --network rinkeby",
     "verify": "hardhat run scripts/verify.ts --network rinkeby",
+    "update": "hardhat run scripts/upgrade.ts --network rinkeby",
     "swap": "hardhat run scripts/swap_ethers.ts --network rinkeby"
   },
   "devDependencies": {
