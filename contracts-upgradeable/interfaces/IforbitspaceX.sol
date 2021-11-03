@@ -2,13 +2,17 @@
 
 pragma solidity ^0.8.8;
 
-interface IforbitspaceX {
+interface IForbitspaceX {
+	event FeeCollected(address indexed feeTo, address indexed token, uint amount);
+
+	event FeeToTransfered(address indexed oldFeeTo, address indexed newFeeTo);
+
 	event AggregateSwapped(
-		address indexed recipient,
+		uint amountIn,
+		uint amountOut,
 		address indexed tokenIn,
 		address indexed tokenOut,
-		uint amountIn,
-		uint amountOut
+		address indexed recipient
 	);
 
 	struct AggregateParam {
@@ -28,6 +32,24 @@ interface IforbitspaceX {
 	}
 
 	function version() external pure returns (string memory);
+
+	function owner() external view returns (address);
+
+	function feeTo() external view returns (address);
+
+	function ETH() external view returns (address);
+
+	function WETH() external view returns (address);
+
+	function setFeeTo(address newFeeTo) external;
+
+	function transferOwnership(address newOwner) external;
+
+	function renounceOwnership() external;
+
+	function collectETH() external returns (uint amount);
+
+	function collectTokens(address token) external returns (uint amount);
 
 	function aggregate(AggregateParam calldata aParam)
 		external
