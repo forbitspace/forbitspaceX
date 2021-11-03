@@ -7,13 +7,11 @@
     "prettier": "prettier --write .",
     "clean": "hardhat clean && rm -rf contracts",
     "compile": "hardhat compile",
-    "build:t": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-upgradeable/forbitspaceX_Transparent.sol ./contracts",
-    "build:u": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-upgradeable/forbitspaceX_UUPS.sol ./contracts",
-    "deploy:t": "hardhat run scripts/deploy-transparent.ts --network rinkeby",
-    "deploy:u": "hardhat run scripts/deploy-uups.ts --network rinkeby",
+    "build": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-upgradeable/forbitspaceX.sol ./contracts",
+    "deploy": "hardhat run scripts/deploy.ts --network rinkeby",
     "verify": "hardhat run scripts/verify.ts --network rinkeby",
     "update": "hardhat run scripts/upgrade.ts --network rinkeby",
-    "swap": "hardhat run scripts/swap_ethers.ts --network rinkeby"
+    "swap": "hardhat run scripts/swap.ts --network rinkeby"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",

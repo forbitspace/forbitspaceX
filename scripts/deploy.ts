@@ -12,9 +12,8 @@ async function main() {
 
   const WETH_ADDRESS: string = WETH_ADDRESSES[chainId];
 
-  const forbitspaceX_factory = await ethers.getContractFactory(
-    "forbitspaceX_UUPS"
-  );
+  // const factory = await ethers.getContractFactory("forbitspaceX");
+  const factory = await ethers.getContractFactory("forbitspaceX_UUPS");
 
   var NEW_OWNER_ADDRESS: string = "";
 
@@ -22,11 +21,10 @@ async function main() {
     NEW_OWNER_ADDRESS = ZERO_ADDRESS;
   }
 
-  const proxy = await upgrades.deployProxy(
-    forbitspaceX_factory,
-    [WETH_ADDRESS, NEW_OWNER_ADDRESS],
-    { kind: "uups" }
-  );
+  const proxy = await upgrades.deployProxy(factory, [
+    WETH_ADDRESS,
+    NEW_OWNER_ADDRESS,
+  ]);
   await proxy.deployed();
 
   console.log("Proxy deployed to >>>", proxy.address);

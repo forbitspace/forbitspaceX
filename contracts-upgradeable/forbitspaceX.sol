@@ -5,8 +5,9 @@ pragma abicoder v2;
 
 import { IforbitspaceX } from "./interfaces/IforbitspaceX.sol";
 import { Payment, SafeMath, Address } from "./libraries/Payment.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-abstract contract forbitspaceX is IforbitspaceX, Payment {
+contract forbitspaceX is IforbitspaceX, Payment {
 	using SafeMath for uint;
 	using Address for address;
 
@@ -22,6 +23,10 @@ abstract contract forbitspaceX is IforbitspaceX, Payment {
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() initializer {}
+
+	function version() public pure virtual override returns (string memory) {
+		return "2.0.0";
+	}
 
 	function aggregate(AggregateParam calldata aParam)
 		public
@@ -98,4 +103,8 @@ abstract contract forbitspaceX is IforbitspaceX, Payment {
 			require((amountInActual > 0) && (amountOutActual > 0), "I_A_A");
 		}
 	}
+}
+
+contract forbitspaceX_UUPS is forbitspaceX, UUPSUpgradeable {
+	function _authorizeUpgrade(address newImplementation) internal virtual override {}
 }
