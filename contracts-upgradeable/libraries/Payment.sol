@@ -6,9 +6,8 @@ import { SafeERC20, Address, IERC20 } from "./SafeERC20.sol";
 import { SafeMath } from "./SafeMath.sol";
 import { IWETH } from "../interfaces/IWETH.sol";
 import { Storage } from "./Storage.sol";
-import { IPayment } from "../interfaces/IPayment.sol";
 
-abstract contract Payment is IPayment, Storage {
+abstract contract Payment is Storage {
 	using SafeMath for uint;
 	using SafeERC20 for IERC20;
 

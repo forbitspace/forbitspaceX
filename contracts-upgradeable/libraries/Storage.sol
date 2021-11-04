@@ -3,9 +3,9 @@
 pragma solidity ^0.8.8;
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { IStorage } from "../interfaces/IStorage.sol";
+import { IforbitspaceX } from "../interfaces/IforbitspaceX.sol";
 
-abstract contract Storage is IStorage, OwnableUpgradeable {
+abstract contract Storage is IforbitspaceX, OwnableUpgradeable {
 	address private _feeTo_;
 	address private _WETH_;
 	address private _ETH_;
@@ -15,6 +15,30 @@ abstract contract Storage is IStorage, OwnableUpgradeable {
 		setFeeTo(_feeTo);
 		setWETH(_WETH);
 		setETH(address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+	}
+
+	function owner() public view override(IforbitspaceX, OwnableUpgradeable) returns (address) {
+		return super.owner();
+	}
+
+	function feeTo() public view override returns (address) {
+		return _feeTo_;
+	}
+
+	function ETH() public view override returns (address) {
+		return _ETH_;
+	}
+
+	function WETH() public view override returns (address) {
+		return _WETH_;
+	}
+
+	function renounceOwnership() public override(IforbitspaceX, OwnableUpgradeable) onlyOwner {
+		super.renounceOwnership();
+	}
+
+	function transferOwnership(address newOwner) public override(IforbitspaceX, OwnableUpgradeable) onlyOwner {
+		super.transferOwnership(newOwner);
 	}
 
 	function setFeeTo(address _feeTo) public override onlyOwner {
@@ -32,17 +56,5 @@ abstract contract Storage is IStorage, OwnableUpgradeable {
 	function setWETH(address _WETH) private initializer {
 		require(_WETH != address(0), "Z");
 		_WETH_ = _WETH;
-	}
-
-	function feeTo() public view override returns (address) {
-		return _feeTo_;
-	}
-
-	function ETH() public view override returns (address) {
-		return _ETH_;
-	}
-
-	function WETH() public view override returns (address) {
-		return _WETH_;
 	}
 }

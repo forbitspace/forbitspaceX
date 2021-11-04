@@ -3,39 +3,6 @@
 pragma solidity ^0.8.8;
 pragma abicoder v2;
 
-interface IforbitspaceX {
-	event AggregateSwapped(
-		address indexed recipient,
-		address indexed tokenIn,
-		address indexed tokenOut,
-		uint amountIn,
-		uint amountOut
-	);
-
-	struct AggregateParam {
-		address tokenIn;
-		address tokenOut;
-		uint amountInTotal;
-		address recipient;
-		SwapParam[] sParams;
-	}
-
-	struct SwapParam {
-		address addressToApprove;
-		address exchangeTarget;
-		address tokenIn; // tokenFrom
-		address tokenOut; // tokenTo
-		bytes swapData;
-	}
-
-	function version() external pure returns (string memory);
-
-	function aggregate(AggregateParam calldata aParam)
-		external
-		payable
-		returns (uint amountInAcutual, uint amountOutAcutual);
-}
-
 //
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
@@ -740,19 +707,62 @@ abstract contract OwnableUpgradeable is Initializable, ContextUpgradeable {
 	uint[49] private __gap;
 }
 
-interface IStorage {
+interface IforbitspaceX {
+	event FeeCollected(address indexed feeTo, address indexed token, uint amount);
+
 	event FeeToTransfered(address indexed oldFeeTo, address indexed newFeeTo);
 
-	function setFeeTo(address newFeeTo) external;
+	event AggregateSwapped(
+		address indexed recipient,
+		address indexed tokenIn,
+		address indexed tokenOut,
+		uint amountIn,
+		uint amountOut
+	);
+
+	struct AggregateParam {
+		address tokenIn;
+		address tokenOut;
+		uint amountInTotal;
+		address recipient;
+		SwapParam[] sParams;
+	}
+
+	struct SwapParam {
+		address addressToApprove;
+		address exchangeTarget;
+		address tokenIn; // tokenFrom
+		address tokenOut; // tokenTo
+		bytes swapData;
+	}
+
+	function version() external pure returns (string memory);
+
+	function owner() external view returns (address);
 
 	function feeTo() external view returns (address);
 
 	function ETH() external view returns (address);
 
 	function WETH() external view returns (address);
+
+	function renounceOwnership() external;
+
+	function transferOwnership(address newOwner) external;
+
+	function setFeeTo(address newFeeTo) external;
+
+	function collectETH() external returns (uint amount);
+
+	function collectTokens(address token) external returns (uint amount);
+
+	function aggregate(AggregateParam calldata aParam)
+		external
+		payable
+		returns (uint amountInAcutual, uint amountOutAcutual);
 }
 
-abstract contract Storage is IStorage, OwnableUpgradeable {
+abstract contract Storage is IforbitspaceX, OwnableUpgradeable {
 	address private _feeTo_;
 	address private _WETH_;
 	address private _ETH_;
@@ -762,6 +772,30 @@ abstract contract Storage is IStorage, OwnableUpgradeable {
 		setFeeTo(_feeTo);
 		setWETH(_WETH);
 		setETH(address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE));
+	}
+
+	function owner() public view override(IforbitspaceX, OwnableUpgradeable) returns (address) {
+		return super.owner();
+	}
+
+	function feeTo() public view override returns (address) {
+		return _feeTo_;
+	}
+
+	function ETH() public view override returns (address) {
+		return _ETH_;
+	}
+
+	function WETH() public view override returns (address) {
+		return _WETH_;
+	}
+
+	function renounceOwnership() public override(IforbitspaceX, OwnableUpgradeable) onlyOwner {
+		super.renounceOwnership();
+	}
+
+	function transferOwnership(address newOwner) public override(IforbitspaceX, OwnableUpgradeable) onlyOwner {
+		super.transferOwnership(newOwner);
 	}
 
 	function setFeeTo(address _feeTo) public override onlyOwner {
@@ -780,29 +814,9 @@ abstract contract Storage is IStorage, OwnableUpgradeable {
 		require(_WETH != address(0), "Z");
 		_WETH_ = _WETH;
 	}
-
-	function feeTo() public view override returns (address) {
-		return _feeTo_;
-	}
-
-	function ETH() public view override returns (address) {
-		return _ETH_;
-	}
-
-	function WETH() public view override returns (address) {
-		return _WETH_;
-	}
 }
 
-interface IPayment is IStorage {
-	event FeeCollected(address indexed feeTo, address indexed token, uint amount);
-
-	function collectETH() external returns (uint amount);
-
-	function collectTokens(address token) external returns (uint amount);
-}
-
-abstract contract Payment is IPayment, Storage {
+abstract contract Payment is Storage {
 	using SafeMath for uint;
 	using SafeERC20 for IERC20;
 
@@ -1425,7 +1439,7 @@ abstract contract UUPSUpgradeable is Initializable, ERC1967UpgradeUpgradeable {
 }
 
 //
-contract forbitspaceX is IforbitspaceX, Payment {
+contract forbitspaceX is Payment {
 	using SafeMath for uint;
 	using Address for address;
 
@@ -1523,7 +1537,6 @@ contract forbitspaceX is IforbitspaceX, Payment {
 	}
 }
 
-// contract forbitspaceX_Transparent is forbitspaceX {}
 contract forbitspaceX_UUPS is forbitspaceX, UUPSUpgradeable {
 	function _authorizeUpgrade(address newImplementation) internal virtual override {}
 }

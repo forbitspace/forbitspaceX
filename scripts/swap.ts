@@ -15,6 +15,7 @@ import {
 } from "./constants/addresses";
 
 import { ChainId } from "./constants/chain_id";
+import { PROXY_ADDRESS } from "./deploy_verify";
 
 const enum DexType {
   UNI_V2,
@@ -43,8 +44,14 @@ type SwapParam = {
   swapData: string;
 };
 
-// const PROXY_ADDRESS = "0x44B7a535b1bDD4fE8719b067C01FB8e7ECcCbdE6"; // Transparent
-const PROXY_ADDRESS = "0x95Bd7eE97BE1dA0aACE068FD392d0a3F5d7CC0b4"; // UUPS
+main()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
 
 async function main() {
   const [signer] = await ethers.getSigners();
@@ -295,12 +302,3 @@ function getSwapData(
     swapData: encode,
   };
 }
-
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });

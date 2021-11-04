@@ -1,22 +1,20 @@
 import { run, ethers, upgrades } from "hardhat";
+import { isUUPS, PROXY_ADDRESS } from "./deploy_verify";
 
-async function main() {
+async function upgrade(PROXY_ADDRESS: string, isUUPS?: boolean) {
   await run("compile");
 
-  // const PROXY_ADDRESS = "0x44B7a535b1bDD4fE8719b067C01FB8e7ECcCbdE6"; // Transparent
-  const PROXY_ADDRESS = "0x95Bd7eE97BE1dA0aACE068FD392d0a3F5d7CC0b4"; // UUPS
-
-  // const factory = await ethers.getContractFactory("forbitspaceX"); // Transparent
-  const factory = await ethers.getContractFactory("forbitspaceX_UUPS"); // UUPS
+  const factory = await ethers.getContractFactory(
+    isUUPS ? "forbitspaceX_UUPS" : "forbitspaceX"
+  );
 
   const contract = await upgrades.upgradeProxy(PROXY_ADDRESS, factory);
   await contract.deployed();
-
-  console.log("success");
 }
 
-main()
+upgrade(PROXY_ADDRESS, isUUPS)
   .then(() => {
+    console.log("success");
     process.exit(0);
   })
   .catch((error) => {

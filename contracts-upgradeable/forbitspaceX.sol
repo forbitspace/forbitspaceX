@@ -3,11 +3,10 @@
 pragma solidity ^0.8.8;
 pragma abicoder v2;
 
-import { IforbitspaceX } from "./interfaces/IforbitspaceX.sol";
 import { Payment, SafeMath, Address } from "./libraries/Payment.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract forbitspaceX is IforbitspaceX, Payment {
+contract forbitspaceX is Payment {
 	using SafeMath for uint;
 	using Address for address;
 

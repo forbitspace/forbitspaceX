@@ -3,8 +3,15 @@ import { getChainId } from "@openzeppelin/upgrades-core";
 import { ChainId } from "./constants/chain_id";
 import { WETH_ADDRESSES, ZERO_ADDRESS } from "./constants/addresses";
 
-async function main() {
+export async function deploy(
+  isUUPS?: boolean,
+  feeTo?: string
+): Promise<string> {
   await run("compile");
+
+  if (!feeTo || feeTo === "") {
+    feeTo = ZERO_ADDRESS;
+  }
 
   const chainId: ChainId = await getChainId(network.provider);
 
@@ -12,28 +19,12 @@ async function main() {
 
   const WETH_ADDRESS: string = WETH_ADDRESSES[chainId];
 
-  // const factory = await ethers.getContractFactory("forbitspaceX");
-  const factory = await ethers.getContractFactory("forbitspaceX_UUPS");
+  const factory = await ethers.getContractFactory(
+    isUUPS ? "forbitspaceX_UUPS" : "forbitspaceX"
+  );
 
-  var NEW_OWNER_ADDRESS: string = "";
-
-  if (!NEW_OWNER_ADDRESS || NEW_OWNER_ADDRESS === "") {
-    NEW_OWNER_ADDRESS = ZERO_ADDRESS;
-  }
-
-  const proxy = await upgrades.deployProxy(factory, [
-    WETH_ADDRESS,
-    NEW_OWNER_ADDRESS,
-  ]);
+  const proxy = await upgrades.deployProxy(factory, [WETH_ADDRESS, feeTo]);
   await proxy.deployed();
 
-  console.log("Proxy deployed to >>>", proxy.address);
+  return proxy.address;
 }
-main()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });

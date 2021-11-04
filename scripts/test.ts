@@ -1,9 +1,7 @@
 import { ethers } from "hardhat";
+import { PROXY_ADDRESS } from "./deploy_verify";
 
-// const PROXY_ADDRESS = "0x44B7a535b1bDD4fE8719b067C01FB8e7ECcCbdE6"; // Transparent
-const PROXY_ADDRESS = "0x95Bd7eE97BE1dA0aACE068FD392d0a3F5d7CC0b4"; // UUPS
-
-async function main() {
+async function test(PROXY_ADDRESS: string) {
   const [signer] = await ethers.getSigners();
 
   const forbitspaceX = await ethers.getContractAt(
@@ -11,6 +9,7 @@ async function main() {
     PROXY_ADDRESS,
     signer
   );
+
   const [owner, feeTo, ETH, WETH, version]: string[] = await Promise.all([
     forbitspaceX.owner(),
     forbitspaceX.feeTo(),
@@ -22,7 +21,7 @@ async function main() {
   console.log({ owner, feeTo, ETH, WETH, version });
 }
 
-main()
+test(PROXY_ADDRESS)
   .then(() => {
     process.exit(0);
   })

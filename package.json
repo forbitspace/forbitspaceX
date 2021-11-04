@@ -8,8 +8,7 @@
     "clean": "hardhat clean && rm -rf contracts",
     "compile": "hardhat compile",
     "build": "sol-merger --export-plugin SPDXLicenseRemovePlugin ./contracts-upgradeable/forbitspaceX.sol ./contracts",
-    "deploy": "hardhat run scripts/deploy.ts --network rinkeby",
-    "verify": "hardhat run scripts/verify.ts --network rinkeby",
+    "deploy": "hardhat run scripts/deploy_verify.ts --network rinkeby",
     "update": "hardhat run scripts/upgrade.ts --network rinkeby",
     "swap": "hardhat run scripts/swap.ts --network rinkeby"
   },
