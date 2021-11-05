@@ -1,15 +1,17 @@
 import { task, HardhatUserConfig } from "hardhat/config";
-
+import "@openzeppelin/hardhat-upgrades";
+import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-web3";
-import "@nomiclabs/hardhat-etherscan";
-import "@openzeppelin/hardhat-upgrades";
 
 import {
   PRIVATE_KEY,
   PRIVATE_KEY_MAINNET,
   ETHEREUM_API_KEY,
+  BSC_API_KEY,
+  POLYGON_API_KEY,
+  AVALANCHE_API_KEY,
   ETHEREUM_RPC,
   RINKEBY_RPC,
   BSC_RPC,
@@ -36,6 +38,7 @@ const config: HardhatUserConfig = {
     },
     localhost: {
       url: "http://127.0.0.1:8545",
+      accounts: [PRIVATE_KEY],
       loggingEnabled: true,
     },
     mainnet: {
@@ -104,7 +107,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: ETHEREUM_API_KEY,
+    apiKey: POLYGON_API_KEY,
   },
   paths: {
     // sources: "./contracts-upgradeable",

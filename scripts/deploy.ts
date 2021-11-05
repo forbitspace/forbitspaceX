@@ -28,3 +28,12 @@ export async function deploy(
 
   return proxy.address;
 }
+
+// deploy(true, "")
+//   .then(() => {
+//     process.exit(0);
+//   })
+//   .catch((error) => {
+//     console.error(error);
+//     process.exit(1);
+//   });
