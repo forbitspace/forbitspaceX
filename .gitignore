@@ -1,0 +1,11 @@
+.DS_Store
+node_modules
+.vscode
+.env
+yarn.lock
+package-lock.json
+dist
+
+#Hardhat files
+cache
+artifacts
