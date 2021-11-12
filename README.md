@@ -60,7 +60,7 @@ npm run verify
 
 ## Deployment addresses
 
-- **Ethereum**: **_[`0xb3FeF4B71A4EDB6f1BD51bf9417876042B936dd6`](https://etherscan.io/address/0xb3FeF4B71A4EDB6f1BD51bf9417876042B936dd6#code)_**
+- **Ethereum**: **_[`0x3331ce0B925017BcE86421915098e1D3E4A58c3F`](https://etherscan.io/address/0x3331ce0b925017bce86421915098e1d3e4a58c3f#code)_**
 
 ## Contributing
 
