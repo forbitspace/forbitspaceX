@@ -28,7 +28,7 @@ abstract contract Payment is IPayment, Ownable {
 	) internal {
 		if (IERC20(token).allowance(address(this), addressToApprove) < amount) {
 			IERC20(token).safeApprove(addressToApprove, 0);
-			IERC20(token).safeIncreaseAllowance(addressToApprove, type(uint).max);
+			IERC20(token).safeIncreaseAllowance(addressToApprove, amount);
 		}
 	}
 
