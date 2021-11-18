@@ -36,20 +36,20 @@ contract forbitspaceX is IforbitspaceX, Payment, ReentrancyGuard {
 		pay(address(this), tokenIn, amountInTotal);
 
 		// amountAcutual before
-		amountInActual = balanceOf(tokenIn);
+		uint amountInBefore = balanceOf(tokenIn);
 		amountOutActual = balanceOf(tokenOut);
 
 		// call swap on multi dexs
 		_swap(params);
 
 		// amountAcutual after
-		amountInActual = amountInActual.sub(balanceOf(tokenIn));
+		amountInActual = amountInBefore.sub(balanceOf(tokenIn));
 		amountOutActual = balanceOf(tokenOut).sub(amountOutActual);
 
 		require((amountInActual > 0) && (amountOutActual > 0), "I_A_T_A"); // incorrect actual total amounts
 
 		// refund tokens
-		pay(_msgSender(), tokenIn, amountInTotal.sub(amountInActual, "N_E_T")); // not enough tokens
+		pay(_msgSender(), tokenIn, amountInBefore.sub(amountInActual, "N_E_T")); // not enough tokens
 		pay(recipient, tokenOut, amountOutActual.mul(9995).div(10000)); // 0.05% fee
 
 		// sweep tokens for owner
