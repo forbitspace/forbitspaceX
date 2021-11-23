@@ -5,4 +5,6 @@ interface IPayment {
 	function collectETH() external returns (uint amount);
 
 	function collectTokens(address token) external returns (uint amount);
+
+	function setAdmin(address newAdmin) external ;
 }

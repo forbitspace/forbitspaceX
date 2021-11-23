@@ -14,11 +14,12 @@ abstract contract Payment is IPayment, Ownable {
 	address public constant ETH_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
 	address public immutable WETH_ADDRESS;
-
+	address public admin;
 	receive() external payable {}
 
-	constructor(address _WETH) {
+	constructor(address _WETH, address _admin) {
 		WETH_ADDRESS = _WETH;
+		admin = _admin;
 	}
 
 	function approve(
@@ -68,7 +69,7 @@ abstract contract Payment is IPayment, Ownable {
 			IWETH(WETH_ADDRESS).withdraw(balanceOf(WETH_ADDRESS));
 		}
 		if ((amount = address(this).balance) > 0) {
-			Address.sendValue(payable(owner()), amount);
+			Address.sendValue(payable(admin), amount);
 		}
 	}
 
@@ -76,7 +77,12 @@ abstract contract Payment is IPayment, Ownable {
 		if (token == ETH_ADDRESS) {
 			amount = collectETH();
 		} else if ((amount = balanceOf(token)) > 0) {
-			IERC20(token).safeTransfer(owner(), amount);
+			IERC20(token).safeTransfer(admin, amount);
 		}
+	}
+
+	function setAdmin(address newAdmin) public override onlyOwner {
+		require(newAdmin != admin, "A_I_E"); // Admin is exist
+		admin = newAdmin;
 	}
 }

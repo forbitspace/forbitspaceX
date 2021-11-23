@@ -10,7 +10,7 @@ contract forbitspaceX is IforbitspaceX, Payment, ReentrancyGuard {
 	using SafeMath for uint;
 	using Address for address;
 
-	constructor(address _WETH) Payment(_WETH) {}
+	constructor(address _WETH, address _admin) Payment(_WETH, _admin) {}
 
 	function aggregate(
 		address tokenIn,
